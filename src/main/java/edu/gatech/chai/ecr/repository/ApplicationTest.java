@@ -17,11 +17,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @EnableAutoConfiguration
-@EntityScan("gatech.edu.STIECR.DB.model")
-@EnableJpaRepositories("gatech.edu.STIECR.DB.repo")
-@ComponentScan("gatech.edu.ECR_Repository.controller")
-@ComponentScan("gatech.edu.ECR_Repository")
-@ComponentScan("gatech.edu.ECR_Repository.service")
+@EntityScan("edu.gatech.chai.ecr.jpa.model")
+@EnableJpaRepositories("edu.gatech.chai.ecr.jpa.repo")
+@ComponentScan("edu.gatech.chai.ecr.repository.controller")
+@ComponentScan("edu.gatech.chai.ecr.repository")
+@ComponentScan("edu.gatech.chai.ecr.repository.service")
 @SpringBootApplication
 public class ApplicationTest extends SpringBootServletInitializer{
 

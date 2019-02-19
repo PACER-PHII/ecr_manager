@@ -29,9 +29,11 @@ cp target/ecr-manager-0.0.1-SNAPSHOT.war $CATALINA_BASE/webapps/ecr-manager
 If you are handling network configuration manually, you must edit the main configuration file found at src/main/resources/application.properties
 
 Set the following environment variables for database connections
+```
 export JDBC_URL = <jdbc_url>
 export JDBC_USERNAME = <postgres username>
 export JDBC_PASSWORD = <postgres password>
+```
 
 ### REST API
 

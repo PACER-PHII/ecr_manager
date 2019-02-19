@@ -19,7 +19,7 @@
         
         
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/resources"/>
-        <dependent-module archiveName="ecr-jpabase-0.0.1-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/ecr-jpabase/ecr-jpabase">
+        <dependent-module archiveName="ecr-jpabase-0.0.1.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/ecr-jpabase/ecr-jpabase">
             <dependency-type>uses</dependency-type>
         </dependent-module>
                                 

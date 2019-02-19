@@ -1,23 +1,20 @@
-#Use the Postgres image as a base
-FROM tomcat:latest
+#Build the Maven project
+FROM maven:3.5.2-alpine as builder
+COPY . /usr/src/app
+WORKDIR /usr/src/app
+RUN mvn clean install
+
+FROM tomcat:alpine
 MAINTAINER Mike Riley "michael.riley@gtri.gatech.edu"
-
-RUN apt-get update -y && apt-get upgrade -y
-
-RUN apt-get install -y \
-      git \
-      postgresql \
-      openjdk-8-jdk \
-      maven
+RUN apk update
+RUN apk add zip postgresql-client
 	  
 # Define environment variable
-ENV POSTGRES_USER postgres
-ENV POSTGRES_PASSWORD postgres
-ENV POSTGRES_DB ecrdb
+#ENV JDBC_USERNAME <DB Username>
+#ENV JDBC_PASSWORD <DB Password>
+#ENV JDBC_URL <JDBC URL>
 
-#RUN mvn clean install -DskipTests -f ecrLib/ecr_javalib
-ADD . /usr/src/ecr_src/
-RUN mvn clean install -DskipTests -f /usr/src/ecr_src/ecr_javalib
-RUN mvn clean install -DskipTests -f /usr/src/ecr_src/
-RUN cp /usr/src/ecr_src/target/PHCR_Controller-0.0.1-SNAPSHOT.war $CATALINA_HOME/webapps/
-COPY wait-for-postgres.sh /usr/local/bin/wait-for-postgres.sh
+# Copy GT-FHIR war file to webapps.
+COPY --from=builder /usr/src/app/target/ecr-manager-0.0.1-SNAPSHOT.war $CATALINA_HOME/webapps/ecr-manager.war
+
+EXPOSE 8080

@@ -10,8 +10,8 @@ pipeline{
                 script{
                     docker.withRegistry('https://gt-build.hdap.gatech.edu'){
                         //Build and push the database image
-                        def elrReceiverImage = docker.build("pacerecrrepository:1.0", "-f ./Dockerfile .")
-                        elrReceiverImage.push('latest')
+                        def ecrManagerImage = docker.build("ecrmanager:1.0", "-f ./Dockerfile .")
+                        ecrManagerImage.push('latest')
                     }
                 }
             }
@@ -21,7 +21,7 @@ pipeline{
         stage('Notify'){
             steps{
                 script{
-                    rancher confirm: true, credentialId: 'gt-rancher-server', endpoint: 'https://gt-rancher.hdap.gatech.edu/v2-beta', environmentId: '1a7', environments: '', image: 'gt-build.hdap.gatech.edu/pacerecrrepository:latest', ports: '', service: 'PACER/ecr-repository', timeout: 60                  
+                    rancher confirm: true, credentialId: 'gt-rancher-server', endpoint: 'https://gt-rancher.hdap.gatech.edu/v2-beta', environmentId: '1a7', environments: '', image: 'gt-build.hdap.gatech.edu/ecrmanager:latest', ports: '', service: 'GPHD/ecr-manager', timeout: 60                  
                 }
             }
         }

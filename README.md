@@ -16,7 +16,7 @@ sudo apt-get install -y java-jdk-8 maven
 
 Compile the main project.
 ```
-mvn clean install -DskipTests
+mvn clean install
 ```
 
 To deploy the project, copy the war artifact into your tomcat webapp directoy

@@ -161,7 +161,7 @@ public class PollPACERTask {
 		return retv;
 	}
 
-	@Scheduled(fixedDelay = 60000)
+	@Scheduled(fixedDelay = 120000)
 	public void pollPACERTaskWithFixedRate() {
 		List<ECRJob> ecrJobs = ecrJobRepository.findByStatusCode("R");
 		for (ECRJob ecrJob : ecrJobs) {

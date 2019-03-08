@@ -10,8 +10,8 @@ pipeline{
                 script{
                     docker.withRegistry('https://gt-build.hdap.gatech.edu'){
                         //Build and push the database image
-                        def ecrManagerImage = docker.build("ecrmanager:1.0", "-f ./Dockerfile .")
-                        ecrManagerImage.push('latest')
+                        def ecrManagerImage = docker.build("ecrmanager:${env.BUILD_NUMBER}", "-f ./Dockerfile .")
+                        ecrManagerImage.push("${env.BUILD_NUMBER}")
                     }
                 }
             }
@@ -21,7 +21,7 @@ pipeline{
         stage('Notify'){
             steps{
                 script{
-                    rancher confirm: true, credentialId: 'gt-rancher-server', endpoint: 'https://gt-rancher.hdap.gatech.edu/v2-beta', environmentId: '1a7', environments: '', image: 'gt-build.hdap.gatech.edu/ecrmanager:latest', ports: '', service: 'GPHD/ecr-manager', timeout: 60                  
+                    rancher confirm: true, credentialId: 'gt-rancher-server', endpoint: 'https://gt-rancher.hdap.gatech.edu/v2-beta', environmentId: '1a7', environments: '', image: "gt-build.hdap.gatech.edu/ecrmanager:${env.BUILD_NUMBER}", ports: '', service: 'GPHD/ecr-manager', timeout: 60                  
                 }
             }
         }

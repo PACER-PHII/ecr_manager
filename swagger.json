@@ -1,0 +1,372 @@
+{
+  "openapi" : "3.0.0",
+  "servers" : [ {
+    "description" : "SwaggerHub API Auto Mocking",
+    "url" : "https://virtserver.swaggerhub.com/myungchoi/pacer-index-api/1.0.0"
+  } ],
+  "info" : {
+    "description" : "PACER indexing API for ECR Data Service",
+    "version" : "1.0.0",
+    "title" : "PACER Index API",
+    "contact" : {
+      "email" : "myung.choi@gtri.gatech.edu"
+    },
+    "license" : {
+      "name" : "Apache 2.0",
+      "url" : "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "tags" : [ {
+    "name" : "admins",
+    "description" : "Secured Admin-only calls"
+  }, {
+    "name" : "developers",
+    "description" : "Operations available to regular developers"
+  } ],
+  "paths" : {
+    "/search" : {
+      "get" : {
+        "tags" : [ "developers" ],
+        "summary" : "searches indexes",
+        "operationId" : "searchDecedent",
+        "description" : "By passing in the appropriate options, you can search for decedent indexes\n",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "organization-name",
+          "description" : "Name of Organization",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "organization-id",
+          "description" : "Organization ID Set (Type|Id)",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "search results matching criteria",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Organizations"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "bad input parameter"
+          }
+        }
+      }
+    },
+    "/manage" : {
+      "post" : {
+        "tags" : [ "admins" ],
+        "summary" : "adds a organization",
+        "operationId" : "addOrganization",
+        "description" : "Adds a organization to the system",
+        "responses" : {
+          "201" : {
+            "description" : "a organization created"
+          },
+          "400" : {
+            "description" : "invalid input, object invalid"
+          },
+          "401" : {
+            "description" : "Authentication information is missing or invalid",
+            "headers" : {
+              "WWW_Authenticate" : {
+                "style" : "simple",
+                "explode" : false,
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "organization already exists"
+          }
+        },
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Organization"
+              }
+            }
+          },
+          "description" : "Organization info to add"
+        },
+        "security" : [ {
+          "basicAuth" : [ ]
+        } ]
+      },
+      "get" : {
+        "tags" : [ "admins" ],
+        "summary" : "get all organizations",
+        "operationId" : "getOrganizations",
+        "responses" : {
+          "200" : {
+            "description" : "get all organizations in the system",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Organizations"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Authentication information is missing or invalid",
+            "headers" : {
+              "WWW_Authenticate" : {
+                "style" : "simple",
+                "explode" : false,
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "basicAuth" : [ ]
+        } ]
+      }
+    },
+    "/manage/{id}" : {
+      "get" : {
+        "tags" : [ "admins" ],
+        "summary" : "get a organization by ID",
+        "operationId" : "getOrganization",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "description" : "Get a organization by ID",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "a organization",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Organization"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "invalid input, object invalid"
+          },
+          "401" : {
+            "description" : "Authentication information is missing or invalid",
+            "headers" : {
+              "WWW_Authenticate" : {
+                "style" : "simple",
+                "explode" : false,
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "basicAuth" : [ ]
+        } ]
+      },
+      "put" : {
+        "tags" : [ "admins" ],
+        "summary" : "edit a organization",
+        "operationId" : "updateOrganization",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "description" : "Organization ID to be updated",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "a organization updated"
+          },
+          "400" : {
+            "description" : "invalid input, object invalid"
+          },
+          "401" : {
+            "description" : "Authentication information is missing or invalid",
+            "headers" : {
+              "WWW_Authenticate" : {
+                "style" : "simple",
+                "explode" : false,
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Organization"
+              }
+            }
+          },
+          "description" : "Organization info to add"
+        },
+        "security" : [ {
+          "basicAuth" : [ ]
+        } ]
+      },
+      "delete" : {
+        "tags" : [ "admins" ],
+        "summary" : "delete a organization",
+        "operationId" : "deleteOrganization",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "description" : "Organization ID to be deleted",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "a organization deleted"
+          },
+          "401" : {
+            "description" : "Authentication information is missing or invalid",
+            "headers" : {
+              "WWW_Authenticate" : {
+                "style" : "simple",
+                "explode" : false,
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "basicAuth" : [ ]
+        } ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "Organization" : {
+        "type" : "object",
+        "required" : [ "name", "identifier" ],
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "example" : 1
+          },
+          "name" : {
+            "type" : "string",
+            "example" : "GTMC"
+          },
+          "identifier" : {
+            "type" : "string",
+            "example" : "type|id"
+          },
+          "pacerSource" : {
+            "$ref" : "#/components/schemas/PacerSource"
+          }
+        }
+      },
+      "SecurityForPacer" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string",
+            "example" : "basic"
+          },
+          "username" : {
+            "type" : "string",
+            "example" : "username or token if type is OAuth2"
+          },
+          "password" : {
+            "type" : "string",
+            "example" : "password"
+          }
+        }
+      },
+      "PacerSource" : {
+        "type" : "object",
+        "required" : [ "name", "serverUrl" ],
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "example" : "PACER name"
+          },
+          "serverUrl" : {
+            "type" : "string",
+            "format" : "url",
+            "example" : "https://apps.hdap.gatech.edu/pacer/"
+          },
+          "security" : {
+            "$ref" : "#/components/schemas/SecurityForPacer"
+          },
+          "version" : {
+            "type" : "string",
+            "example" : "1.0.0"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "ECR", "FHIR" ]
+          }
+        }
+      },
+      "Organizations" : {
+        "type" : "object",
+        "required" : [ "count", "created", "list" ],
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "example" : 1
+          },
+          "created" : {
+            "type" : "string",
+            "format" : "date-time",
+            "example" : "2019-01-23T04:54:31.771+00:00"
+          },
+          "list" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Organization"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes" : {
+      "basicAuth" : {
+        "type" : "http",
+        "scheme" : "basic"
+      }
+    }
+  }
+}

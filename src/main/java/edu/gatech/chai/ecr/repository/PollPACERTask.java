@@ -61,7 +61,7 @@ public class PollPACERTask {
 			if (args == null) {
 				args = "?provider-name={providerName}";
 			} else {
-				args = "&provider-name={providerName}";
+				args += "&provider-name={providerName}";
 			}
 			vars.put("providerName", name);
 		}

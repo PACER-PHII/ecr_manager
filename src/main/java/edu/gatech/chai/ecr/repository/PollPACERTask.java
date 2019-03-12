@@ -121,8 +121,8 @@ public class PollPACERTask {
 		} else {
 			referenceId = "";
 		}
-		String requestJson = "{\"name\": \"STD ECR " + ecrId
-				+ "\", \"recordType\": \"ECR\", \"listType\": \"SINGLE_USE\", \"listElements\": [{\"referenceId\": \""
+		String requestJson = "{\"name\": \"STD_ECR_" + ecrId
+				+ "\", \"jobType\": \"ECR\", \"listElements\": [{\"referenceId\": \""
 				+ referenceId + "\", \"name\": \"" + patientFullName + "\"}]}";
 		HttpEntity<String> entity = new HttpEntity<String>(requestJson, headers);
 

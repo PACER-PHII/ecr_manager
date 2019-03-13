@@ -142,6 +142,8 @@ public class PollPACERTask {
 				List<ECR> ecrs = mapper.readValue(ecrReport, mapper.getTypeFactory().constructCollectionType(List.class, ECR.class));
 
 				for (ECR ecr: ecrs) {
+					ecr.setECRId(String.valueOf(ecrId));
+					
 					ECRData ecrData;
 					List<ECRData> ecrDatas = ecrDataRepository
 							.findByEcrIdOrderByVersionDesc(Integer.valueOf(ecr.getECRId()));

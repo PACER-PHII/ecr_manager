@@ -138,19 +138,23 @@ public class PollPACERTask {
 					logger.debug("Patient does not exist or no data found");
 					return retv;
 				}
-				ECR ecr = mapper.readValue(ecrReport, ECR.class);
+//				ECR ecr = mapper.readValue(ecrReport, ECR.class);
+				List<ECR> ecrs = mapper.readValue(ecrReport, mapper.getTypeFactory().constructCollectionType(List.class, ECR.class));
 
-				ECRData ecrData;
-				List<ECRData> ecrDatas = ecrDataRepository
-						.findByEcrIdOrderByVersionDesc(Integer.valueOf(ecr.getECRId()));
-				if (ecrDatas.size() == 0) {
-					ecrData = new ECRData(ecr, ecrId);
-				} else {
-					ecrData = ecrDatas.get(0);
-					ecrData.update(ecr);
+				for (ECR ecr: ecrs) {
+					ECRData ecrData;
+					List<ECRData> ecrDatas = ecrDataRepository
+							.findByEcrIdOrderByVersionDesc(Integer.valueOf(ecr.getECRId()));
+					if (ecrDatas.size() == 0) {
+						ecrData = new ECRData(ecr, ecrId);
+					} else {
+						ecrData = ecrDatas.get(0);
+						ecrData.update(ecr);
+					}
+
+					ecrDataRepository.save(ecrData);
 				}
-
-				ecrDataRepository.save(ecrData);
+				
 				retv = 0;
 			} catch (IOException e) {
 				e.printStackTrace();

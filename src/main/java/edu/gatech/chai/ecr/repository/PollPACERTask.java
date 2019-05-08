@@ -1,11 +1,13 @@
 package edu.gatech.chai.ecr.repository;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,16 +43,14 @@ public class PollPACERTask {
 	@Autowired
 	private ECRDataRepository ecrDataRepository;
 
-	private String searchPacerIndexService(String identifier, String name) {
-		String retv = null;
-
+	private JsonNode searchPacerIndexService(String identifier, String name) {
 		RestTemplate restTemplate = new RestTemplate();
 		String pacerIndexServiceUrl = System.getenv("PACER_INDEX_SERVICE");
 
 		if (pacerIndexServiceUrl.endsWith("/")) {
-			pacerIndexServiceUrl = pacerIndexServiceUrl.substring(0, pacerIndexServiceUrl.length()-1);
+			pacerIndexServiceUrl = pacerIndexServiceUrl.substring(0, pacerIndexServiceUrl.length() - 1);
 		}
-		
+
 		Map<String, String> vars = new HashMap<>();
 		String args = null;
 		if (identifier != null && !identifier.isEmpty()) {
@@ -65,7 +65,7 @@ public class PollPACERTask {
 			}
 			vars.put("providerName", name);
 		}
-		
+
 		pacerIndexServiceUrl += args;
 
 		ResponseEntity<String> response = restTemplate.getForEntity(pacerIndexServiceUrl, String.class, vars);
@@ -81,7 +81,7 @@ public class PollPACERTask {
 					JsonNode pacerInfo = list.get(0);
 					JsonNode pacerSource = pacerInfo.path("pacerSource");
 					if (pacerSource.path("type").asText().equalsIgnoreCase("ECR")) {
-						return pacerSource.path("serverUrl").asText();
+						return pacerSource; // pacerSource.path("serverUrl").asText();
 					}
 				}
 			} catch (IOException e) {
@@ -92,11 +92,11 @@ public class PollPACERTask {
 			logger.debug("Failed to access PACER Index Service at " + pacerIndexServiceUrl);
 		}
 
-		return retv;
+		return null;
 	}
 
 	private int sendPacerRequest(String pacerJobManagerEndPoint, Integer ecrId, String patientIdentifier,
-			String patientFullName) {
+			String patientFullName, String authHeader) {
 		int retv = -1;
 
 		// Generate request JSON
@@ -105,7 +105,10 @@ public class PollPACERTask {
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
-
+		if (authHeader != null && !authHeader.isEmpty()) {
+			headers.add("Authorization", authHeader);
+		}
+		
 //		Map<String, String> vars = new HashMap<>();
 //		vars.put("ecrId", ecrId.toString());
 //		vars.put("patientId", patientId);
@@ -114,16 +117,17 @@ public class PollPACERTask {
 			patientFullName = "";
 		}
 
-		String[] patientParam = patientIdentifier.split("\\|", 2);
-		String referenceId = null;
-		if (patientParam[1] != null) {
-			referenceId = patientParam[1];
-		} else {
-			referenceId = "";
-		}
+//		String[] patientParam = patientIdentifier.split("\\|", 2);
+//		String referenceId = null;
+//		if (patientParam[1] != null) {
+//			referenceId = patientParam[1];
+//		} else {
+//			referenceId = "";
+//		}
+		String referenceId = patientIdentifier;
 		String requestJson = "{\"name\": \"STD_ECR_" + ecrId
-				+ "\", \"jobType\": \"ECR\", \"listElements\": [{\"referenceId\": \""
-				+ referenceId + "\", \"name\": \"" + patientFullName + "\"}]}";
+				+ "\", \"jobType\": \"ECR\", \"listElements\": [{\"referenceId\": \"" + referenceId + "\", \"name\": \""
+				+ patientFullName + "\"}]}";
 		HttpEntity<String> entity = new HttpEntity<String>(requestJson, headers);
 
 		ResponseEntity<String> response = restTemplate.postForEntity(pacerJobManagerEndPoint, entity, String.class);
@@ -132,18 +136,19 @@ public class PollPACERTask {
 			String ecrReport = null;
 			try {
 				ecrReport = response.getBody();
-				logger.debug("updateECR received:"+ecrReport);
-				
+				logger.debug("updateECR received:" + ecrReport);
+
 				if ("[]".equals(ecrReport.trim())) {
 					logger.debug("Patient does not exist or no data found");
 					return retv;
 				}
 //				ECR ecr = mapper.readValue(ecrReport, ECR.class);
-				List<ECR> ecrs = mapper.readValue(ecrReport, mapper.getTypeFactory().constructCollectionType(List.class, ECR.class));
+				List<ECR> ecrs = mapper.readValue(ecrReport,
+						mapper.getTypeFactory().constructCollectionType(List.class, ECR.class));
 
-				for (ECR ecr: ecrs) {
+				for (ECR ecr : ecrs) {
 					ecr.setECRId(String.valueOf(ecrId));
-					
+
 					ECRData ecrData;
 					List<ECRData> ecrDatas = ecrDataRepository
 							.findByEcrIdOrderByVersionDesc(Integer.valueOf(ecr.getECRId()));
@@ -156,7 +161,7 @@ public class PollPACERTask {
 
 					ecrDataRepository.save(ecrData);
 				}
-				
+
 				retv = 0;
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -182,6 +187,7 @@ public class PollPACERTask {
 			if (providers.size() == 0)
 				continue; // We can't request without knowing a provider.
 
+			JsonNode pacerSource = null;
 			String pacerJobManagerEndPoint = null;
 			for (Provider provider : providers) {
 				TypeableID providerId = provider.getid();
@@ -189,8 +195,9 @@ public class PollPACERTask {
 				String name = provider.getname();
 
 				// Search from pacer index service.
-				pacerJobManagerEndPoint = searchPacerIndexService(identifier, name);
-				if (pacerJobManagerEndPoint != null && !pacerJobManagerEndPoint.isEmpty()) {
+				pacerSource = searchPacerIndexService(identifier, name);
+				if (pacerSource != null) {
+					pacerJobManagerEndPoint = pacerSource.path("serverUrl").asText();
 					logger.debug("Got PACER endpoint=" + pacerJobManagerEndPoint);
 					break;
 				}
@@ -199,6 +206,17 @@ public class PollPACERTask {
 			if (pacerJobManagerEndPoint == null || pacerJobManagerEndPoint.isEmpty()) {
 				logger.debug("No PACER Job Manger Endpoint Found. Skipping ECRid: " + ecr.getECRId());
 				continue;
+			}
+
+			JsonNode securityJson = pacerSource.path("security");
+			String authHeader = null;
+			if (securityJson.isMissingNode() == false) {
+				String authType = securityJson.get("type").asText();
+				if ("basic".equalsIgnoreCase(authType)) {
+					String credential = securityJson.get("username").asText()+":"+securityJson.get("password").asText();
+					byte[] encodedAuth = Base64.encodeBase64(credential.getBytes(StandardCharsets.ISO_8859_1));
+					authHeader = "Basic "+new String(encodedAuth);
+				}
 			}
 
 			Patient patient = ecr.getPatient();
@@ -225,7 +243,7 @@ public class PollPACERTask {
 				}
 				logger.debug("Sending PACER Request to " + pacerJobManagerEndPoint + "with ecrId=" + ecrId
 						+ " and patientIdentifier=" + patientIdentifier);
-				if (sendPacerRequest(pacerJobManagerEndPoint, ecrId, patientIdentifier, patientFullName) == 0) {
+				if (sendPacerRequest(pacerJobManagerEndPoint, ecrId, patientIdentifier, patientFullName, authHeader) == 0) {
 					ecrJob.instantUpdate();
 					ecrJobRepository.save(ecrJob);
 				}

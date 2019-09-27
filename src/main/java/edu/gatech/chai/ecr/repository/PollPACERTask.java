@@ -228,8 +228,8 @@ public class PollPACERTask {
 				if (value != null && !value.isEmpty()) {
 					if (type == null)
 						type = "";
-//					patientIdentifier = type + "|" + value;   // Revisit later
-					patientIdentifier = value;
+					patientIdentifier = type + "|" + value;   // Revisit later
+//					patientIdentifier = value;
 					break;
 				}
 			}

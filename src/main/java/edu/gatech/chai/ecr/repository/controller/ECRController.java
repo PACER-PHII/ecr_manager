@@ -93,7 +93,7 @@ public class ECRController {
 		// See if this is in the job list.
 		List<ECRJob> ecrJobs = ecrJobRepository.findByReportIdOrderByIdDesc(data.getECRId());
 		if (ecrJobs == null || ecrJobs.size() == 0) {
-			ECRJob ecrJob = new ECRJob(data.getECR());
+			ECRJob ecrJob = new ECRJob(data);
 			ecrJob.startRun();
 			
 			// Add this to the job.
@@ -152,7 +152,7 @@ public class ECRController {
 		List<ECRData> data = new ArrayList<ECRData>();
 		int diffPull = -1;
 		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = new PageRequest(page, PAGE_SIZE);
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 			List<ECRData> incomingData = ecrDataRepository.findByFirstNameOrderByVersionDesc(firstName, pageable);
 			int oldSize = data.size();
 			data.addAll(incomingData);
@@ -171,7 +171,7 @@ public class ECRController {
 		List<ECRData> data = new ArrayList<ECRData>();
 		int diffPull = -1;
 		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = new PageRequest(page, PAGE_SIZE);
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 			List<ECRData> incomingData = ecrDataRepository.findByZipCodeOrderByVersionDesc(zipCode, pageable);
 			int oldSize = data.size();
 			data.addAll(incomingData);
@@ -190,7 +190,7 @@ public class ECRController {
 		List<ECRData> data = new ArrayList<ECRData>();
 		int diffPull = -1;
 		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = new PageRequest(page, PAGE_SIZE);
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 			List<ECRData> incomingData = ecrDataRepository.findByDiagnosisCodeOrderByVersionDesc(diagnosisCode,
 					pageable);
 			int oldSize = data.size();
@@ -211,7 +211,7 @@ public class ECRController {
 		List<ECRData> data = new ArrayList<ECRData>();
 		int diffPull = -1;
 		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = new PageRequest(page, PAGE_SIZE);
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 			List<ECRData> incomingData = ecrDataRepository.findByLastNameAndFirstNameOrderByVersionDesc(lastName,
 					firstName, pageable);
 			int oldSize = data.size();
@@ -232,7 +232,7 @@ public class ECRController {
 		List<ECRData> data = new ArrayList<ECRData>();
 		int diffPull = -1;
 		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = new PageRequest(page, PAGE_SIZE);
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 			List<ECRData> incomingData = ecrDataRepository.findByLastNameAndZipCodeOrderByVersionDesc(lastName, zipCode,
 					pageable);
 			int oldSize = data.size();
@@ -253,7 +253,7 @@ public class ECRController {
 		List<ECRData> data = new ArrayList<ECRData>();
 		int diffPull = -1;
 		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = new PageRequest(page, PAGE_SIZE);
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 			List<ECRData> incomingData = ecrDataRepository.findByLastNameAndDiagnosisCodeOrderByVersionDesc(lastName,
 					diagnosisCode, pageable);
 			int oldSize = data.size();
@@ -274,7 +274,7 @@ public class ECRController {
 		List<ECRData> data = new ArrayList<ECRData>();
 		int diffPull = -1;
 		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = new PageRequest(page, PAGE_SIZE);
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 			List<ECRData> incomingData = ecrDataRepository.findByFirstNameAndZipCodeOrderByVersionDesc(firstName,
 					zipCode, pageable);
 			int oldSize = data.size();
@@ -295,7 +295,7 @@ public class ECRController {
 		List<ECRData> data = new ArrayList<ECRData>();
 		int diffPull = -1;
 		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = new PageRequest(page, PAGE_SIZE);
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 			List<ECRData> incomingData = ecrDataRepository.findByFirstNameAndDiagnosisCodeOrderByVersionDesc(firstName,
 					diagnosisCode, pageable);
 			int oldSize = data.size();
@@ -316,7 +316,7 @@ public class ECRController {
 		List<ECRData> data = new ArrayList<ECRData>();
 		int diffPull = -1;
 		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = new PageRequest(page, PAGE_SIZE);
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 			List<ECRData> incomingData = ecrDataRepository.findByZipCodeAndDiagnosisCodeOrderByVersionDesc(zipCode,
 					diagnosisCode, pageable);
 			int oldSize = data.size();
@@ -337,7 +337,7 @@ public class ECRController {
 		List<ECRData> data = new ArrayList<ECRData>();
 		int diffPull = -1;
 		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = new PageRequest(page, PAGE_SIZE);
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 			List<ECRData> incomingData = ecrDataRepository
 					.findByLastNameAndFirstNameAndZipCodeOrderByVersionDesc(lastName, firstName, zipCode, pageable);
 			int oldSize = data.size();
@@ -358,7 +358,7 @@ public class ECRController {
 		List<ECRData> data = new ArrayList<ECRData>();
 		int diffPull = -1;
 		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = new PageRequest(page, PAGE_SIZE);
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 			List<ECRData> incomingData = ecrDataRepository.findByLastNameAndFirstNameAndDiagnosisCodeOrderByVersionDesc(
 					lastName, firstName, diagnosisCode, pageable);
 			int oldSize = data.size();
@@ -379,7 +379,7 @@ public class ECRController {
 		List<ECRData> data = new ArrayList<ECRData>();
 		int diffPull = -1;
 		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = new PageRequest(page, PAGE_SIZE);
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 			List<ECRData> incomingData = ecrDataRepository.findByLastNameAndZipCodeAndDiagnosisCodeOrderByVersionDesc(
 					lastName, zipCode, diagnosisCode, pageable);
 			int oldSize = data.size();
@@ -400,7 +400,7 @@ public class ECRController {
 		List<ECRData> data = new ArrayList<ECRData>();
 		int diffPull = -1;
 		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = new PageRequest(page, PAGE_SIZE);
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 			List<ECRData> incomingData = ecrDataRepository.findByFirstNameAndZipCodeAndDiagnosisCodeOrderByVersionDesc(
 					firstName, zipCode, diagnosisCode, pageable);
 			int oldSize = data.size();
@@ -423,7 +423,7 @@ public class ECRController {
 		List<ECRData> data = new ArrayList<ECRData>();
 		int diffPull = -1;
 		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = new PageRequest(page, PAGE_SIZE);
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 			List<ECRData> incomingData = ecrDataRepository
 					.findByLastNameAndFirstNameAndZipCodeAndDiagnosisCodeOrderByVersionDesc(lastName, firstName,
 							zipCode, diagnosisCode, pageable);
@@ -463,6 +463,10 @@ public class ECRController {
 			log.error("Error pulling the currentId");
 			log.error(e.getMessage());
 		}
+	}
+	
+	public static int getStaticCurrentId() {
+		return ECRController.currentId.incrementAndGet();
 	}
 
 	public Integer getCurrentId() throws SQLException {

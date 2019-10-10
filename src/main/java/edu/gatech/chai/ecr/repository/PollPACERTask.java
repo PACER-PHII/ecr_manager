@@ -1,10 +1,23 @@
 package edu.gatech.chai.ecr.repository;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
@@ -15,12 +28,16 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.opencsv.CSVParser;
 
 import edu.gatech.chai.ecr.jpa.json.ECR;
 import edu.gatech.chai.ecr.jpa.json.Name;
@@ -31,10 +48,12 @@ import edu.gatech.chai.ecr.jpa.model.ECRData;
 import edu.gatech.chai.ecr.jpa.model.ECRJob;
 import edu.gatech.chai.ecr.jpa.repo.ECRDataRepository;
 import edu.gatech.chai.ecr.jpa.repo.ECRJobRepository;
+import edu.gatech.chai.ecr.repository.controller.ECRController;
 
 @Component
 public class PollPACERTask {
 	private static final Logger logger = LoggerFactory.getLogger(PollPACERTask.class);
+	ObjectMapper mapper = new ObjectMapper();
 
 	@Autowired
 	private ECRJobRepository ecrJobRepository;
@@ -69,7 +88,7 @@ public class PollPACERTask {
 
 		ResponseEntity<String> response = restTemplate.getForEntity(pacerIndexServiceUrl, String.class, vars);
 		if (response.getStatusCode().equals(HttpStatus.OK)) {
-			ObjectMapper mapper = new ObjectMapper();
+//			ObjectMapper mapper = new ObjectMapper();
 			JsonNode root;
 			try {
 				root = mapper.readTree(response.getBody());
@@ -94,27 +113,31 @@ public class PollPACERTask {
 		return null;
 	}
 
-	private int sendPacerRequest(String pacerJobManagerEndPoint, Integer ecrId, String patientIdentifier,
-			String patientFullName, String authHeader) {
+	private int sendPacerRequest(String pacerJobManagerEndPoint, JsonNode query) {
 		int retv = -1;
 
 		// Generate request JSON
 
 		RestTemplate restTemplate = new RestTemplate();
+		JsonNode security = query.get("security");
+		String authHeader = null;
+		if (security != null) {
+			authHeader = security.textValue();
+		}
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		if (authHeader != null && !authHeader.isEmpty()) {
 			headers.add("Authorization", authHeader);
 		}
-		
+
 //		Map<String, String> vars = new HashMap<>();
 //		vars.put("ecrId", ecrId.toString());
 //		vars.put("patientId", patientId);
 
-		if (patientFullName == null) {
-			patientFullName = "";
-		}
+//		if (patientFullName == null) {
+//			patientFullName = "";
+//		}
 
 //		String[] patientParam = patientIdentifier.split("\\|", 2);
 //		String referenceId = null;
@@ -123,15 +146,28 @@ public class PollPACERTask {
 //		} else {
 //			referenceId = "";
 //		}
-		String referenceId = patientIdentifier;
-		String requestJson = "{\"name\": \"STD_ECR_" + ecrId
-				+ "\", \"jobType\": \"ECR\", \"listElements\": [{\"referenceId\": \"" + referenceId + "\", \"name\": \""
-				+ patientFullName + "\"}]}";
-		HttpEntity<String> entity = new HttpEntity<String>(requestJson, headers);
+//		String referenceId = patientIdentifier;
+//		String requestJson = "{\"name\": \"STD_ECR_" + ecrId
+//				+ "\", \"jobType\": \"ECR\", \"listElements\": [{\"referenceId\": \"" + referenceId + "\", \"name\": \""
+//				+ patientFullName + "\"}]}";
+
+		DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+		Date date = new Date();
+		JsonNode requestJson = mapper.createObjectNode();
+		((ObjectNode) requestJson).put("name", "STD_ECR_" + dateFormat.format(date));
+		((ObjectNode) requestJson).put("jobType", "ECR");
+		((ObjectNode) requestJson).set("listElements", query.get("patients"));
+//				
+//				
+//				"{\"name\": \"STD_ECR_"+dateFormat.format(date)+"\", \"jobType\": \"ECR\", \"listElements\": ";
+//		requestJson.concat(query.get("patients").);
+//		requestJson.concat("}");
+
+		HttpEntity<JsonNode> entity = new HttpEntity<JsonNode>(requestJson, headers);
 
 		ResponseEntity<String> response = restTemplate.postForEntity(pacerJobManagerEndPoint, entity, String.class);
 		if (response.getStatusCode().equals(HttpStatus.CREATED) || response.getStatusCode().equals(HttpStatus.OK)) {
-			ObjectMapper mapper = new ObjectMapper();
+//			ObjectMapper mapper = new ObjectMapper();
 			String ecrReport = null;
 			try {
 				ecrReport = response.getBody();
@@ -146,19 +182,73 @@ public class PollPACERTask {
 						mapper.getTypeFactory().constructCollectionType(List.class, ECR.class));
 
 				for (ECR ecr : ecrs) {
-					ecr.setECRId(String.valueOf(ecrId));
+					// First search ecr data to see if we have the matching patient using
+					// received patient id.
+					List<ECRData> ecrDatas = new ArrayList<ECRData>();
 
-					ECRData ecrData;
-					List<ECRData> ecrDatas = ecrDataRepository
-							.findByEcrIdOrderByVersionDesc(Integer.valueOf(ecr.getECRId()));
-					if (ecrDatas.size() == 0) {
-						ecrData = new ECRData(ecr, ecrId);
-					} else {
-						ecrData = ecrDatas.get(0);
-						ecrData.update(ecr);
+					Patient patient = ecr.getPatient();
+					String patientIdentifier = null;
+					if (patient != null) {
+						// See if we can find a ECR record for this patient using
+						// patient ID.
+						List<TypeableID> ids = patient.getid();
+						for (TypeableID pid : ids) {
+							String tempPatientIdentifier = ECRData.stringPatientId(pid);
+							ecrDatas = ecrDataRepository.findByPatientIdsContainingIgnoreCase(tempPatientIdentifier);
+							if (ecrDatas.size() > 0) {
+								logger.debug("ECR Data found with patientIDs (" + tempPatientIdentifier + ") in ECR");
+								patientIdentifier = tempPatientIdentifier;
+								break;
+							}
+						}
 					}
 
+					ECRData ecrData;
+					if (ecrDatas.size() == 0 && ecr.getECRId() != null) {
+						ecrDatas = ecrDataRepository.findByEcrIdOrderByVersionDesc(Integer.valueOf(ecr.getECRId()));
+						if (ecrDatas.size() > 0) {
+							logger.debug("ECR Data found with requested ecrId (" + ecr.getECRId() + ") in ECR");
+						} else {
+							ecrData = new ECRData(ecr, Integer.valueOf(ecr.getECRId()));
+						}
+					}
+
+					if (ecrDatas.size() == 0) {
+						// Couldn't locate this data.. and couldn't create a new one... skip over...
+						continue;
+					}
+
+					if (ecrDatas.size() > 1) {
+						logger.warn("Multiple (" + ecrDatas.size()
+								+ ") ECR Data sets detected for query.\nFirst entry will be used.");
+					}
+					ecrData = ecrDatas.get(0);
+					ecrData.update(ecr);
+//					}
+
 					ecrDataRepository.save(ecrData);
+
+					// Ok, now we update job entry.
+					ECRJob ecrJob = null;
+					if (patientIdentifier != null) {
+						List<ECRJob> ecrJobs = ecrJobRepository.findByPatientIdContainingIgnoreCase(patientIdentifier);
+						if (ecrJobs.size() > 0) {
+							ecrJob = ecrJobs.get(0);
+						}
+					}
+
+					if (ecrJob == null) {
+						List<ECRJob> ecrJobs = ecrJobRepository
+								.findByReportIdOrderByIdDesc(Integer.valueOf(ecr.getECRId()));
+						if (ecrJobs.size() > 0) {
+							ecrJob = ecrJobs.get(0);
+						}
+					}
+
+					if (ecrJob != null) {
+						ecrJob.instantUpdate();
+						ecrJobRepository.save(ecrJob);
+					}
 				}
 
 				retv = 0;
@@ -171,25 +261,170 @@ public class PollPACERTask {
 		return retv;
 	}
 
+	@Scheduled(fixedDelay = 60000)
+	public void readBulkDataFromFile() {
+		CSVParser parser = new CSVParser();
+		String localFilePath = System.getenv("LOCAL_BULKDATA_PATH");
+		String localPacerUrl = System.getenv("LOCAL_PACER_URL");
+		String localPacerSecurity = System.getenv("LOCAL_PACER_SECURITY");
+
+		if (localPacerUrl == null || localPacerUrl.isEmpty()) {
+			return;
+		}
+
+		if (localFilePath != null && !localFilePath.trim().isEmpty() && !"none".equalsIgnoreCase(localFilePath)) {
+			logger.debug("LocalMappingFilePath is set to " + localFilePath);
+
+			// get the list of files in this path.
+			BufferedReader reader = null;
+			try (Stream<Path> walk = Files.walk(Paths.get(localFilePath))) {
+				List<String> result = walk.filter(Files::isRegularFile).map(x -> x.toString())
+						.collect(Collectors.toList());
+
+				for (String aFile : result) {
+					reader = new BufferedReader(new FileReader(aFile));
+					String line = reader.readLine();
+					int i = 0;
+
+					while (line != null) {
+						String line_ = line.trim();
+						if (line_.startsWith("#") || line_.charAt(1) == '#' || line_.isEmpty()) {
+							// This is comment line skip...
+							line = reader.readLine();
+							continue;
+						}
+
+						String[] parsedLine = parser.parseLine(line_);
+						// First item must be patient identifier system type. The second one
+						// must be the value.
+						i++;
+						if (parsedLine.length < 2) {
+							logger.warn("Line #" + i + " has not enough data (" + line_ + "). Skipping.");
+							line = reader.readLine();
+							continue;
+						}
+
+						String patientIdentifier = (parsedLine[0] + "|" + parsedLine[1]).trim();
+
+						ECR ecr = null;
+						List<ECRData> ecrs = ecrDataRepository.findByPatientIdsContainingIgnoreCase(patientIdentifier);
+						Integer id = null;
+						ECRData ecrData = null;
+
+						Patient patient = new Patient();
+						TypeableID patientTId = new TypeableID();
+						patientTId.settype(parsedLine[0]);
+						patientTId.setvalue(parsedLine[1]);
+						patient.setid(Arrays.asList(patientTId));
+
+						Provider provider = new Provider();
+						TypeableID providerTId = new TypeableID();
+						providerTId.settype("LOCAL");
+						if (localPacerSecurity != null && !localPacerSecurity.isEmpty()) {
+							providerTId.setvalue(localPacerUrl + "^" + localPacerSecurity);
+						} else {
+							providerTId.setvalue(localPacerUrl);
+						}
+						provider.setid(providerTId);
+
+						if (ecrs.size() == 0) {
+							id = ECRController.getStaticCurrentId();
+							ecr = new ECR();
+							ecr.setECRId(Integer.toString(id));
+						} else {
+							ecrData = ecrs.get(0);
+							ecr = ecrData.getECR();
+							id = Integer.getInteger(ecr.getECRId());
+						}
+
+						ecr.setPatient(patient);
+						ecr.setProvider(Arrays.asList(provider));
+
+						if (ecrData == null) {
+							ecrData = new ECRData(ecr, id);
+						}
+
+						ecrDataRepository.save(ecrData);
+
+						List<ECRJob> ecrJobs = ecrJobRepository.findByReportIdOrderByIdDesc(ecrData.getId());
+						if (ecrJobs == null || ecrJobs.size() == 0) {
+							ECRJob ecrJob = new ECRJob(ecrData);
+							ecrJob.startRun();
+
+							// Add this to the job.
+							ecrJobRepository.save(ecrJob);
+						} else {
+							ecrJobs.get(0).startRun();
+						}
+
+						// read next line
+						line = reader.readLine();
+
+					} // while
+					reader.close();
+					Files.deleteIfExists(Paths.get(aFile));
+				}
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+		}
+	}
+
 	@Scheduled(fixedDelay = 120000)
 	public void pollPACERTaskWithFixedRate() {
 		List<ECRJob> ecrJobs = ecrJobRepository.findByStatusCode("R");
-		for (ECRJob ecrJob : ecrJobs) {
-			Integer ecrId = ecrJob.getReportId();
-			List<ECRData> ecrDataList = ecrDataRepository.findByEcrIdOrderByVersionDesc(ecrId);
-			if (ecrDataList.size() == 0)
-				continue;
 
-			ECRData ecrData = ecrDataList.get(0);
+		// Create a map that contains each job.
+		Map<String, JsonNode> ecrQueriesToSend = new HashMap<String, JsonNode>();
+		//
+		// Run through ecrJobs and aggregate them based on the PACER destinations to Map
+		// with the following JSON object.
+		// {"security": "Basic ###",
+		// "patients": [{"referenceId": "type|id", "name": "full name", "ecrId":
+		// "localEcrId"}, ...]
+		// }
+		for (ECRJob ecrJob : ecrJobs) {
+			// It's confusing... ReportId in ECR Job is a primary key ID in ECR Data.
+			Integer ecrDataKeyId = ecrJob.getReportId();
+			ECRData ecrData = ecrDataRepository.findById(ecrDataKeyId);
+			if (ecrData == null) {
+				logger.warn("No ECR Data for the outstanding ECR Job (" + ecrDataKeyId + ")");
+				continue;
+			}
+
+			Integer ecrId = ecrData.getECRId();
+
+			// We should have only one ecrData per ecrJob. The JpaRepository returns list.
+			// So, we get the 0th entry.
+//			ECRData ecrData = ecrDataList.get(0);
 			ECR ecr = ecrData.getECR();
 			List<Provider> providers = ecr.getProvider();
-			if (providers.size() == 0)
+			if (providers.size() == 0) {
+				logger.warn("No Providers for the outstanding ECR Job (" + ecrDataKeyId + ")");
 				continue; // We can't request without knowing a provider.
+			}
 
 			JsonNode pacerSource = null;
 			String pacerJobManagerEndPoint = null;
+			String authHeader = null;
 			for (Provider provider : providers) {
 				TypeableID providerId = provider.getid();
+				if ("LOCAL".equals(providerId.gettype())) {
+					String[] endpoint_info = providerId.getvalue().split("\\^");
+					pacerJobManagerEndPoint = endpoint_info[0];
+					if (endpoint_info.length == 2) {
+						String authInfo = endpoint_info[1].trim();
+						String[] authEntry = authInfo.split(" ");
+						if (authEntry.length == 2) {
+							byte[] encodedAuth = Base64
+									.encodeBase64(authEntry[1].getBytes(StandardCharsets.ISO_8859_1));
+							authHeader = authEntry[0] + " " + new String(encodedAuth);
+						}
+					}
+					break;
+				}
 				String identifier = providerId.gettype() + "|" + providerId.getvalue();
 				String name = provider.getname();
 
@@ -207,15 +442,30 @@ public class PollPACERTask {
 				continue;
 			}
 
-			JsonNode securityJson = pacerSource.path("security");
-			String authHeader = null;
-			if (securityJson.isMissingNode() == false) {
-				String authType = securityJson.get("type").asText();
-				if ("basic".equalsIgnoreCase(authType)) {
-					String credential = securityJson.get("username").asText()+":"+securityJson.get("password").asText();
-					byte[] encodedAuth = Base64.encodeBase64(credential.getBytes(StandardCharsets.ISO_8859_1));
-					authHeader = "Basic "+new String(encodedAuth);
+			// Now we got a valid end point. We need to create an entry for the Map with a
+			// PACER destination
+			// as a key.
+			JsonNode ecrQuery = ecrQueriesToSend.get(pacerJobManagerEndPoint);
+			if (ecrQuery == null) {
+				ecrQuery = mapper.createObjectNode();
+			}
+
+			if (authHeader == null && pacerSource != null) {
+				JsonNode securityJson = pacerSource.path("security");
+				if (securityJson.isMissingNode() == false) {
+					String authType = securityJson.get("type").asText();
+					if ("basic".equalsIgnoreCase(authType)) {
+						String credential = securityJson.get("username").asText() + ":"
+								+ securityJson.get("password").asText();
+						byte[] encodedAuth = Base64.encodeBase64(credential.getBytes(StandardCharsets.ISO_8859_1));
+						authHeader = "Basic " + new String(encodedAuth);
+//						((ObjectNode) ecrQuery).put("security", authHeader);
+					}
 				}
+			} 
+			
+			if (authHeader != null && !authHeader.isEmpty()){
+				((ObjectNode) ecrQuery).put("security", authHeader);
 			}
 
 			Patient patient = ecr.getPatient();
@@ -228,27 +478,53 @@ public class PollPACERTask {
 				if (value != null && !value.isEmpty()) {
 					if (type == null)
 						type = "";
-					patientIdentifier = type + "|" + value;   // Revisit later
-//					patientIdentifier = value;
-					break;
+					patientIdentifier = ECRData.stringPatientId(patientId);
+
+					if (type.startsWith("http:") || type.startsWith("urn:") || type.startsWith("oid:"))
+						break;
 				}
 			}
 
-			// Call PACER now.
+			JsonNode patientNodeArray;
+			try {
+				patientNodeArray = ecrQuery.withArray("patients");
+			} catch (UnsupportedOperationException e) {
+				((ObjectNode) ecrQuery).putArray("patients");
+				patientNodeArray = ecrQuery.get("patients");
+			}
+
+			// Create patient node
+			JsonNode patientNode = mapper.createObjectNode();
 			if (patientIdentifier != null) {
+				((ObjectNode) patientNode).put("ecrId", ecrId);
+				((ObjectNode) patientNode).put("referenceId", patientIdentifier);
+
 				Name patientName = patient.getname();
 				String patientFullName = null;
 				if (patientName != null) {
-					patientFullName = patientName.toString();
-				}
-				logger.debug("Sending PACER Request to " + pacerJobManagerEndPoint + "with ecrId=" + ecrId
-						+ " and patientIdentifier=" + patientIdentifier);
-				if (sendPacerRequest(pacerJobManagerEndPoint, ecrId, patientIdentifier, patientFullName, authHeader) == 0) {
-					ecrJob.instantUpdate();
-					ecrJobRepository.save(ecrJob);
+					if (!patientName.getfamily().isEmpty() || !patientName.getgiven().isEmpty()) {
+						patientFullName = patientName.toString();
+					} else {
+						patientFullName = "";
+					}
+					((ObjectNode) patientNode).put("name", patientFullName);
 				}
 
+				((ArrayNode) patientNodeArray).add(patientNode);
+//				ecrList.add("{\"referenceId\": \"" + patientIdentifier + "\", \"name\": \""
+//						+ patientFullName + "\"}");
+
+				ecrQueriesToSend.put(pacerJobManagerEndPoint, ecrQuery);
 			}
+		}
+
+		for (Map.Entry<String, JsonNode> entry : ecrQueriesToSend.entrySet()) {
+			System.out.println("PACER url : " + entry.getKey() + " Value : " + entry.getValue().toString());
+			logger.debug("Sending PACER Request to " + entry.getKey());
+			sendPacerRequest(entry.getKey(), entry.getValue());
+//					ecrJob.instantUpdate();
+//					ecrJobRepository.save(ecrJob);
+//			}
 		}
 	}
 }

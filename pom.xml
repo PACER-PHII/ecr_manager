@@ -5,7 +5,7 @@
 
 	<groupId>edu.gatech.chai</groupId>
 	<artifactId>ecr-manager</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 
 	<name>ecr-manager</name>
 	<url>http://maven.apache.org</url>
@@ -44,7 +44,7 @@
 		<dependency>
 			<groupId>edu.gatech.chai</groupId>
 			<artifactId>ecr-jpabase</artifactId>
-			<version>0.0.1</version>
+			<version>0.0.2</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -86,7 +86,12 @@
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
 		</dependency>
-
+		<!-- https://mvnrepository.com/artifact/com.opencsv/opencsv -->
+		<dependency>
+			<groupId>com.opencsv</groupId>
+			<artifactId>opencsv</artifactId>
+			<version>4.6</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>

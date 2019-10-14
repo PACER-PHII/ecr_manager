@@ -40,6 +40,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.opencsv.CSVParser;
 
 import edu.gatech.chai.ecr.jpa.json.ECR;
+import edu.gatech.chai.ecr.jpa.json.LabResult;
 import edu.gatech.chai.ecr.jpa.json.Name;
 import edu.gatech.chai.ecr.jpa.json.Patient;
 import edu.gatech.chai.ecr.jpa.json.Provider;
@@ -336,6 +337,27 @@ public class PollPACERTask {
 							ecr = ecrData.getECR();
 							id = Integer.getInteger(ecr.getECRId());
 						}
+
+						if (parsedLine.length > 2) {
+							// We have LOINC code to populate initial lab data.
+							for (int j=2; j < parsedLine.length; j++) {
+								LabResult labResult = new LabResult();
+								String[] loincLine = parsedLine[j].split("\\^");
+								
+								if (loincLine.length > 2) {
+									labResult.setDate(loincLine[2]);
+								}
+								
+								if (loincLine.length > 1) {
+									labResult.setdisplay(loincLine[1]);
+								}
+								
+								labResult.setcode(loincLine[0]);
+								labResult.setsystem("LN");
+								patient.getlaboratoryResults().add(labResult);
+ 							}
+						}
+						
 
 						ecr.setPatient(patient);
 						ecr.setProvider(Arrays.asList(provider));

@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -275,10 +276,22 @@ public class PollPACERTask {
 
 		if (localFilePath != null && !localFilePath.trim().isEmpty() && !"none".equalsIgnoreCase(localFilePath)) {
 			logger.debug("LocalMappingFilePath is set to " + localFilePath);
+			Path path = Paths.get(localFilePath);
+
+			if (!Files.exists(path)) {
+				try {
+					path = Files.createDirectory(path);
+				} catch (FileAlreadyExistsException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+					return;
+				}
+			}
 
 			// get the list of files in this path.
 			BufferedReader reader = null;
-			try (Stream<Path> walk = Files.walk(Paths.get(localFilePath))) {
+			try (Stream<Path> walk = Files.walk(path)) {
 				List<String> result = walk.filter(Files::isRegularFile).map(x -> x.toString())
 						.collect(Collectors.toList());
 

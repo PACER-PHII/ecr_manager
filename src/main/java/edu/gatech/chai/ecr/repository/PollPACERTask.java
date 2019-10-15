@@ -41,6 +41,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.opencsv.CSVParser;
 
 import edu.gatech.chai.ecr.jpa.json.ECR;
+import edu.gatech.chai.ecr.jpa.json.LabOrderCode;
 import edu.gatech.chai.ecr.jpa.json.LabResult;
 import edu.gatech.chai.ecr.jpa.json.Name;
 import edu.gatech.chai.ecr.jpa.json.Patient;
@@ -364,6 +365,10 @@ public class PollPACERTask {
 								
 								labResult.setcode(loincLine[0]);
 								labResult.setsystem("LN");
+								
+								LabOrderCode labOrder = new LabOrderCode();
+								labOrder.getLaboratory_Results().add(labResult);
+								patient.getlabOrderCode().add(labOrder);
 								patient.getlaboratoryResults().add(labResult);
  							}
 						}

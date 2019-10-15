@@ -326,12 +326,6 @@ public class PollPACERTask {
 						Integer id = null;
 						ECRData ecrData = null;
 
-						Patient patient = new Patient();
-						TypeableID patientTId = new TypeableID();
-						patientTId.settype(parsedLine[0]);
-						patientTId.setvalue(parsedLine[1]);
-						patient.setid(Arrays.asList(patientTId));
-
 						Provider provider = new Provider();
 						provider.setname("LOCAL PROVIDER");
 						TypeableID providerTId = new TypeableID();
@@ -339,15 +333,53 @@ public class PollPACERTask {
 						providerTId.setvalue("1");
 						provider.setid(providerTId);
 
+						Patient patient;
+						
 						if (ecrs.size() == 0) {
 							id = ECRController.getStaticCurrentId();
 							ecr = new ECR();
 							ecr.setECRId(Integer.toString(id));
+							patient = new Patient();
+							TypeableID patientTId = new TypeableID();
+							patientTId.settype(parsedLine[0]);
+							patientTId.setvalue(parsedLine[1]);
+							patient.setid(Arrays.asList(patientTId));
+							ecr.setPatient(patient);
+
+							ecr.setProvider(Arrays.asList(provider));
 						} else {
 							ecrData = ecrs.get(0);
 							ecr = ecrData.getECR();
 							id = Integer.getInteger(ecr.getECRId());
+							patient = ecr.getPatient();
+							if (ecr.getProvider().size() > 0) {
+								provider = ecr.getProvider().get(0);
+							} else {
+								ecr.setProvider(Arrays.asList(provider));
+							}
 						}
+
+//						TypeableID patientTId = new TypeableID();
+//						patientTId.settype(parsedLine[0]);
+//						patientTId.setvalue(parsedLine[1]);
+//						patient.setid(Arrays.asList(patientTId));
+//
+//						Provider provider = new Provider();
+//						provider.setname("LOCAL PROVIDER");
+//						TypeableID providerTId = new TypeableID();
+//						providerTId.settype("LOCAL_PROVIDER");
+//						providerTId.setvalue("1");
+//						provider.setid(providerTId);
+
+//						if (ecrs.size() == 0) {
+//							id = ECRController.getStaticCurrentId();
+//							ecr = new ECR();
+//							ecr.setECRId(Integer.toString(id));
+//						} else {
+//							ecrData = ecrs.get(0);
+//							ecr = ecrData.getECR();
+//							id = Integer.getInteger(ecr.getECRId());
+//						}
 
 						if (parsedLine.length > 2) {
 							// We have LOINC code to populate initial lab data.
@@ -374,8 +406,8 @@ public class PollPACERTask {
 						}
 						
 
-						ecr.setPatient(patient);
-						ecr.setProvider(Arrays.asList(provider));
+//						ecr.setPatient(patient);
+//						ecr.setProvider(Arrays.asList(provider));
 
 						if (ecrData == null) {
 							ecrData = new ECRData(ecr, id);
@@ -384,15 +416,16 @@ public class PollPACERTask {
 						ecrDataRepository.save(ecrData);
 
 						List<ECRJob> ecrJobs = ecrJobRepository.findByReportIdOrderByIdDesc(ecrData.getId());
+						ECRJob ecrJob;
 						if (ecrJobs == null || ecrJobs.size() == 0) {
-							ECRJob ecrJob = new ECRJob(ecrData);
-							ecrJob.startRun();
-
-							// Add this to the job.
-							ecrJobRepository.save(ecrJob);
+							ecrJob = new ECRJob(ecrData);
 						} else {
-							ecrJobs.get(0).startRun();
+							ecrJob = ecrJobs.get(0);
 						}
+						ecrJob.startRun();
+
+						// Add this to the job.
+						ecrJobRepository.save(ecrJob);
 
 						// read next line
 						line = reader.readLine();

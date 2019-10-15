@@ -269,7 +269,7 @@ public class PollPACERTask {
 		CSVParser parser = new CSVParser();
 		String localFilePath = System.getenv("LOCAL_BULKDATA_PATH");
 		String localPacerUrl = System.getenv("LOCAL_PACER_URL");
-		String localPacerSecurity = System.getenv("LOCAL_PACER_SECURITY");
+//		String localPacerSecurity = System.getenv("LOCAL_PACER_SECURITY");
 
 		if (localPacerUrl == null || localPacerUrl.isEmpty()) {
 			return;
@@ -335,51 +335,14 @@ public class PollPACERTask {
 
 						Patient patient;
 						
-						if (ecrs.size() == 0) {
-							id = ECRController.getStaticCurrentId();
-							ecr = new ECR();
-							ecr.setECRId(Integer.toString(id));
-							patient = new Patient();
-							TypeableID patientTId = new TypeableID();
-							patientTId.settype(parsedLine[0]);
-							patientTId.setvalue(parsedLine[1]);
-							patient.setid(Arrays.asList(patientTId));
-							ecr.setPatient(patient);
-
-							ecr.setProvider(Arrays.asList(provider));
-						} else {
-							ecrData = ecrs.get(0);
-							ecr = ecrData.getECR();
-							id = Integer.getInteger(ecr.getECRId());
-							patient = ecr.getPatient();
-							if (ecr.getProvider().size() > 0) {
-								provider = ecr.getProvider().get(0);
-							} else {
-								ecr.setProvider(Arrays.asList(provider));
-							}
-						}
-
-//						TypeableID patientTId = new TypeableID();
-//						patientTId.settype(parsedLine[0]);
-//						patientTId.setvalue(parsedLine[1]);
-//						patient.setid(Arrays.asList(patientTId));
-//
-//						Provider provider = new Provider();
-//						provider.setname("LOCAL PROVIDER");
-//						TypeableID providerTId = new TypeableID();
-//						providerTId.settype("LOCAL_PROVIDER");
-//						providerTId.setvalue("1");
-//						provider.setid(providerTId);
-
-//						if (ecrs.size() == 0) {
-//							id = ECRController.getStaticCurrentId();
-//							ecr = new ECR();
-//							ecr.setECRId(Integer.toString(id));
-//						} else {
-//							ecrData = ecrs.get(0);
-//							ecr = ecrData.getECR();
-//							id = Integer.getInteger(ecr.getECRId());
-//						}
+						ecr = new ECR();
+						patient = new Patient();
+						TypeableID patientTId = new TypeableID();
+						patientTId.settype(parsedLine[0]);
+						patientTId.setvalue(parsedLine[1]);
+						patient.setid(Arrays.asList(patientTId));
+						ecr.setPatient(patient);
+						ecr.setProvider(Arrays.asList(provider));
 
 						if (parsedLine.length > 2) {
 							// We have LOINC code to populate initial lab data.
@@ -405,13 +368,55 @@ public class PollPACERTask {
  							}
 						}
 						
+						if (ecrs.size() == 0) {
+							id = ECRController.getStaticCurrentId();
+							ecr.setECRId(Integer.toString(id));
+							ecrData = new ECRData(ecr, id);
+						} else {
+							ecrData = ecrs.get(0);
+							ecrData.update(ecr);
+							
+//							ecr = ecrData.getECR();
+//							id = Integer.getInteger(ecr.getECRId());
+//							patient = ecr.getPatient();
+//							if (ecr.getProvider().size() > 0) {
+//								provider = ecr.getProvider().get(0);
+//							} else {
+//								ecr.setProvider(Arrays.asList(provider));
+//							}
+						}
+
+//						TypeableID patientTId = new TypeableID();
+//						patientTId.settype(parsedLine[0]);
+//						patientTId.setvalue(parsedLine[1]);
+//						patient.setid(Arrays.asList(patientTId));
+//
+//						Provider provider = new Provider();
+//						provider.setname("LOCAL PROVIDER");
+//						TypeableID providerTId = new TypeableID();
+//						providerTId.settype("LOCAL_PROVIDER");
+//						providerTId.setvalue("1");
+//						provider.setid(providerTId);
+
+//						if (ecrs.size() == 0) {
+//							id = ECRController.getStaticCurrentId();
+//							ecr = new ECR();
+//							ecr.setECRId(Integer.toString(id));
+//						} else {
+//							ecrData = ecrs.get(0);
+//							ecr = ecrData.getECR();
+//							id = Integer.getInteger(ecr.getECRId());
+//						}
+
+
+						
 
 //						ecr.setPatient(patient);
 //						ecr.setProvider(Arrays.asList(provider));
 
-						if (ecrData == null) {
-							ecrData = new ECRData(ecr, id);
-						}
+//						if (ecrData == null) {
+//							ecrData = new ECRData(ecr, id);
+//						}
 
 						ecrDataRepository.save(ecrData);
 

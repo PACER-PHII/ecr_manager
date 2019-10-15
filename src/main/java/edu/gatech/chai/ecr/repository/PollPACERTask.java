@@ -332,13 +332,10 @@ public class PollPACERTask {
 						patient.setid(Arrays.asList(patientTId));
 
 						Provider provider = new Provider();
+						provider.setname("LOCAL PROVIDER");
 						TypeableID providerTId = new TypeableID();
-						providerTId.settype("LOCAL");
-						if (localPacerSecurity != null && !localPacerSecurity.isEmpty()) {
-							providerTId.setvalue(localPacerUrl + "^" + localPacerSecurity);
-						} else {
-							providerTId.setvalue(localPacerUrl);
-						}
+						providerTId.settype("LOCAL_PROVIDER");
+						providerTId.setvalue("1");
 						provider.setid(providerTId);
 
 						if (ecrs.size() == 0) {
@@ -446,20 +443,20 @@ public class PollPACERTask {
 			String authHeader = null;
 			for (Provider provider : providers) {
 				TypeableID providerId = provider.getid();
-				if ("LOCAL".equals(providerId.gettype())) {
-					String[] endpoint_info = providerId.getvalue().split("\\^");
-					pacerJobManagerEndPoint = endpoint_info[0];
-					if (endpoint_info.length == 2) {
-						String authInfo = endpoint_info[1].trim();
-						String[] authEntry = authInfo.split(" ");
-						if (authEntry.length == 2) {
-							byte[] encodedAuth = Base64
-									.encodeBase64(authEntry[1].getBytes(StandardCharsets.ISO_8859_1));
-							authHeader = authEntry[0] + " " + new String(encodedAuth);
-						}
-					}
-					break;
-				}
+//				if ("LOCAL".equals(providerId.gettype())) {
+//					String[] endpoint_info = providerId.getvalue().split("\\^");
+//					pacerJobManagerEndPoint = endpoint_info[0];
+//					if (endpoint_info.length == 2) {
+//						String authInfo = endpoint_info[1].trim();
+//						String[] authEntry = authInfo.split(" ");
+//						if (authEntry.length == 2) {
+//							byte[] encodedAuth = Base64
+//									.encodeBase64(authEntry[1].getBytes(StandardCharsets.ISO_8859_1));
+//							authHeader = authEntry[0] + " " + new String(encodedAuth);
+//						}
+//					}
+//					break;
+//				}
 				String identifier = providerId.gettype() + "|" + providerId.getvalue();
 				String name = provider.getname();
 

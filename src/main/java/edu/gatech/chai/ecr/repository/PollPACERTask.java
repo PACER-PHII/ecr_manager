@@ -571,7 +571,7 @@ public class PollPACERTask {
 			// Create patient node
 			JsonNode patientNode = mapper.createObjectNode();
 			if (patientIdentifier != null) {
-				((ObjectNode) patientNode).put("ecrId", ecrId);
+				((ObjectNode) patientNode).put("recordId", ecrId);
 				((ObjectNode) patientNode).put("referenceId", patientIdentifier);
 
 				Name patientName = patient.getname();

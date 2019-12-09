@@ -15,6 +15,6 @@ RUN apk add zip postgresql-client
 #ENV JDBC_URL <JDBC URL>
 
 # Copy GT-FHIR war file to webapps.
-COPY --from=builder /usr/src/app/target/ecr-manager-0.0.2-SNAPSHOT.war $CATALINA_HOME/webapps/ecr-manager.war
+COPY --from=builder /usr/src/app/target/ecr-manager-0.0.3.war $CATALINA_HOME/webapps/ecr-manager.war
 
 EXPOSE 8080

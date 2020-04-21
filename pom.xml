@@ -44,7 +44,7 @@
 		<dependency>
 			<groupId>edu.gatech.chai</groupId>
 			<artifactId>ecr-jpabase</artifactId>
-			<version>0.0.2</version>
+			<version>0.0.3</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

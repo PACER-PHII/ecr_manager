@@ -8,10 +8,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
 
 @Configuration
 @EnableAutoConfiguration
@@ -26,6 +29,11 @@ public class ApplicationTest extends SpringBootServletInitializer{
 
 	private static final Logger log = LoggerFactory.getLogger(ApplicationTest.class);
 
+	@Bean
+	public TaskScheduler taskScheduler() {
+	    return new ConcurrentTaskScheduler(); //single threaded by default
+	}
+	
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
 		return application.sources(ApplicationTest.class);
 	}

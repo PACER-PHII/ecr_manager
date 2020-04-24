@@ -38,6 +38,7 @@
 			<url>file:///${project.basedir}/local-maven-repo</url>
 		</repository>
 	</repositories>
+	
 	<packaging>war</packaging>
 
 	<dependencies>

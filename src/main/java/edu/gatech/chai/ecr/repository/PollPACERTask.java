@@ -585,6 +585,8 @@ public class PollPACERTask {
 					((ObjectNode) patientNode).put("name", patientFullName);
 				}
 
+				((ObjectNode) patientNode).put("labOrderDate", "2019-10-10");
+
 				((ArrayNode) patientNodeArray).add(patientNode);
 //				ecrList.add("{\"referenceId\": \"" + patientIdentifier + "\", \"name\": \""
 //						+ patientFullName + "\"}");

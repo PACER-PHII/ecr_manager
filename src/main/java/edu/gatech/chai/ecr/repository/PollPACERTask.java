@@ -303,7 +303,7 @@ public class PollPACERTask {
 
 					while (line != null) {
 						String line_ = line.trim();
-						if (line_.startsWith("#") || line_.charAt(1) == '#' || line_.isEmpty()) {
+						if (line_.isEmpty() || line_.startsWith("#") || line_.charAt(1) == '#') {
 							// This is comment line skip...
 							line = reader.readLine();
 							continue;

@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestClientException;
 
 import edu.gatech.chai.ecr.jpa.json.ECR;
 import edu.gatech.chai.ecr.jpa.json.Name;
@@ -460,8 +459,8 @@ public class ECRController {
 			currentId = new AtomicInteger(getCurrentId());
 		} catch (SQLException e) {
 			currentId = new AtomicInteger(1234);
-			log.error("Error pulling the currentId");
-			log.error(e.getMessage());
+			log.warn("Error pulling the currentId");
+			log.warn(e.getMessage());
 		}
 	}
 	

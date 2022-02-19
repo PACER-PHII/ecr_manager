@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-Application<ecr-manager>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "edu.gatech.chai.ecr.repository.Application",
+            "projectName": "ecr-manager",
+            "args": ""
+        }
+    ]
+}

@@ -6,7 +6,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties(prefix="direct.datasource")
+@ConfigurationProperties(prefix="spring.datasource")
 public class ConnectionConfiguration {
 	@Autowired
 	private Environment env;

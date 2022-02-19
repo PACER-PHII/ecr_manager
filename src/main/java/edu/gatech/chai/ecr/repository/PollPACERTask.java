@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -463,7 +464,13 @@ public class PollPACERTask {
 		for (ECRJob ecrJob : ecrJobs) {
 			// It's confusing... ReportId in ECR Job is a primary key ID in ECR Data.
 			Integer ecrDataKeyId = ecrJob.getReportId();
-			ECRData ecrData = ecrDataRepository.findById(ecrDataKeyId);
+			Optional<ECRData> ecrDataOptional = ecrDataRepository.findById(ecrDataKeyId);
+			
+			ECRData ecrData = null;
+			if (ecrDataOptional.isPresent()) {
+				ecrData = ecrDataOptional.get();
+			}
+
 			if (ecrData == null) {
 				logger.warn("No ECR Data for the outstanding ECR Job (" + ecrDataKeyId + ")");
 				continue;
@@ -476,7 +483,7 @@ public class PollPACERTask {
 //			ECRData ecrData = ecrDataList.get(0);
 			ECR ecr = ecrData.getECR();
 			List<Provider> providers = ecr.getProvider();
-			if (providers.size() == 0) {
+			if (providers.isEmpty()) {
 				logger.warn("No Providers for the outstanding ECR Job (" + ecrDataKeyId + ")");
 				continue; // We can't request without knowing a provider.
 			}

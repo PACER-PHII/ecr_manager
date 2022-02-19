@@ -148,3 +148,5 @@ local.properties
 .gitmodules
 
 .vscode
+env_local.sh
+env_local_mssql.sh

@@ -22,7 +22,7 @@ import edu.gatech.chai.ecr.jpa.json.utils.AddressUtil;
 import edu.gatech.chai.ecr.jpa.json.utils.ECRJsonConverter;
 
 @Entity
-@Table(name = "ecr_data", schema = "ecr")
+@Table(name = "ecr_data")
 public class ECRData {
 	@Id
 	@Column(name = "case_report_key")

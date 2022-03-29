@@ -12,7 +12,7 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
 @Entity
-@Table(name = "ecr_job")
+@Table(name = "ecr_job", schema = "ecr")
 public class ECRJob {
 	@Id
 	@Column(name = "ecr_job_key")

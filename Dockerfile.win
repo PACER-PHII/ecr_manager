@@ -1,0 +1,14 @@
+#Build the Maven project
+FROM winamd64/openjdk as builder
+COPY . /usr/src/app
+WORKDIR /usr/src/app
+RUN ./mvnw clean install
+
+FROM winamd64/openjdk
+	  
+# Copy GT-FHIR war file to webapps.
+COPY --from=builder /usr/src/app/mssql-jdbc_auth-10.2.0.x64.dll /openjdk-17/bin/mssql-jdbc_auth-10.2.0.x64.dll
+COPY --from=builder /usr/src/app/target/ecr-manager-0.0.3.jar ecr-manager-0.0.3.jar
+CMD [ "java", "-jar", "ecr-manager-0.0.3.jar"]
+
+EXPOSE 8080

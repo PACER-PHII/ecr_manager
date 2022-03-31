@@ -22,6 +22,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +33,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -120,9 +124,18 @@ public class PollPACERTask {
 	private int sendPacerRequest(String pacerJobManagerEndPoint, JsonNode query) {
 		int retv = -1;
 
-		// Generate request JSON
+		CloseableHttpClient httpClient = HttpClients.custom().setSSLHostnameVerifier(new NoopHostnameVerifier()).build();
+		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+		requestFactory.setHttpClient(httpClient);
 
-		RestTemplate restTemplate = new RestTemplate();
+		// Generate request JSON
+		RestTemplate restTemplate;
+		if ("true".equalsIgnoreCase(System.getenv("TRUST_CERT"))) {
+			restTemplate = new RestTemplate(requestFactory);
+		} else {
+			restTemplate = new RestTemplate();
+		}
+		
 		JsonNode security = query.get("security");
 		String authHeader = null;
 		if (security != null) {

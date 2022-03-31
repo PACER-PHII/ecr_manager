@@ -132,6 +132,7 @@ public class PollPACERTask {
 		RestTemplate restTemplate;
 		if ("true".equalsIgnoreCase(System.getenv("TRUST_CERT"))) {
 			restTemplate = new RestTemplate(requestFactory);
+			logger.info("ALL CERTIFICATES WILL BE TRUSTED WITHOUT HOSTNAME VERIFICATION.");
 		} else {
 			restTemplate = new RestTemplate();
 		}

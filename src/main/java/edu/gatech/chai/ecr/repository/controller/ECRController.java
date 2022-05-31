@@ -437,9 +437,15 @@ public class ECRController {
 		return new ResponseEntity<List<ECR>>(ecrReturnList, HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/ECR", method = RequestMethod.PUT)
-	public ResponseEntity<ECR> updateECR(@RequestBody ECR ecr) {
-		ECRData data = ecrDataRepository.findByEcrIdOrderByVersionDesc(Integer.valueOf(ecr.getECRId())).get(0);
+	@RequestMapping(value = "/ECR", method = RequestMethod.PUT, params = "id")
+	public ResponseEntity<ECR> updateECR(@RequestBody ECR ecr, @RequestParam String id) {
+		String ecrId = "";
+		if (id == null || id.isBlank()) {
+			ecrId = ecr.getECRId();
+		} else {
+			ecrId = id;
+		}
+		ECRData data = ecrDataRepository.findByEcrIdOrderByVersionDesc(Integer.valueOf(ecrId)).get(0);
 		ECRData updatingData = new ECRData(data);
 		updatingData.setId(currentId.incrementAndGet());
 		updatingData.update(ecr);

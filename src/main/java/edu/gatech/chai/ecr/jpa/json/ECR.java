@@ -130,7 +130,9 @@ public class ECR {
 					this.notes.add(newNote);
 				}
 			}
-			
+			if(newECR.getSendingApplication() != null){
+				this.sendingApplication = newECR.getSendingApplication();
+			}
 		}
 	}
 

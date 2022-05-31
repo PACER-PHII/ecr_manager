@@ -126,7 +126,6 @@ public class Provider implements Comparable<Provider>{
 		}
 		if(newProvider.getcountry() != null) {
 			log.debug("ECR PROVIDER --- updating country");
-			this.name = newProvider.getcountry();
 			this.country = newProvider.getcountry();
 		}
 	}

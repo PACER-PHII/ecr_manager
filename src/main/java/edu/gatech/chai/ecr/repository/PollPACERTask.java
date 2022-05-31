@@ -211,12 +211,16 @@ public class PollPACERTask {
 						// patient ID.
 						List<TypeableID> ids = patient.getid();
 						for (TypeableID pid : ids) {
-							String tempPatientIdentifier = ECRData.stringPatientId(pid);
-							ecrDatas = ecrDataRepository.findByPatientIdsContainingIgnoreCase(tempPatientIdentifier);
-							if (ecrDatas.size() > 0) {
-								logger.debug("ECR Data found with patientIDs (" + tempPatientIdentifier + ") in ECR");
-								patientIdentifier = tempPatientIdentifier;
-								break;
+							// do the search only when we have a valid patient id
+							if (pid.gettype() != null && !pid.gettype().isBlank() &&
+								pid.getvalue() != null && !pid.getvalue().isBlank()) {	
+								String tempPatientIdentifier = ECRData.stringPatientId(pid);
+								ecrDatas = ecrDataRepository.findByPatientIdsContainingIgnoreCase(tempPatientIdentifier);
+								if (ecrDatas.size() > 0) {
+									logger.debug("ECR Data found case(s) with a patientID (" + tempPatientIdentifier + ") in ECR DB");
+									patientIdentifier = tempPatientIdentifier;
+									break;
+								}
 							}
 						}
 					}
@@ -232,13 +236,14 @@ public class PollPACERTask {
 					}
 
 					if (ecrDatas.size() == 0) {
-						// Couldn't locate this data.. and couldn't create a new one... skip over...
+						logger.warn("We could not locate the ECR for patientID = " + patientIdentifier);
 						continue;
 					}
 
 					if (ecrDatas.size() > 1) {
 						logger.warn("Multiple (" + ecrDatas.size()
-								+ ") ECR Data sets detected for query.\nFirst entry will be used.");
+								+ ") ECR Data sets detected for patientID = " + patientIdentifier + ".\nWe are not updating anything since we do not know which to update.");
+						continue;
 					}
 					ecrData = ecrDatas.get(0);
 					ecrData.update(ecr);

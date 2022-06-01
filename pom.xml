@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>edu.gatech.chai</groupId>
 	<artifactId>ecr-manager</artifactId>
-	<version>0.0.3</version>
+	<version>0.0.4</version>
 	<name>ecr-manager</name>
 	<properties>
     	<java.version>1.8</java.version>

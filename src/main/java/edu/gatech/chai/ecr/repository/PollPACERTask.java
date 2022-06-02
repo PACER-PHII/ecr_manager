@@ -115,7 +115,7 @@ public class PollPACERTask {
 				e.printStackTrace();
 			}
 		} else {
-			logger.debug("Failed to access PACER Index Service at " + pacerIndexServiceUrl);
+			logger.info("Failed to access PACER Index Service at " + pacerIndexServiceUrl);
 		}
 
 		return null;
@@ -189,10 +189,10 @@ public class PollPACERTask {
 			String ecrReport = null;
 			try {
 				ecrReport = response.getBody();
-				logger.debug("updateECR received:" + ecrReport);
+				logger.info("updateECR received:" + ecrReport);
 
 				if ("[]".equals(ecrReport.trim())) {
-					logger.debug("Patient does not exist or no data found");
+					logger.info("Patient does not exist or no data found");
 					return retv;
 				}
 //				ECR ecr = mapper.readValue(ecrReport, ECR.class);
@@ -217,7 +217,7 @@ public class PollPACERTask {
 								String tempPatientIdentifier = ECRData.stringPatientId(pid);
 								ecrDatas = ecrDataRepository.findByPatientIdsContainingIgnoreCase(tempPatientIdentifier);
 								if (ecrDatas.size() > 0) {
-									logger.debug("ECR Data found case(s) with a patientID (" + tempPatientIdentifier + ") in ECR DB");
+									logger.info("ECR Data found case(s) with a patientID (" + tempPatientIdentifier + ") in ECR DB");
 									patientIdentifier = tempPatientIdentifier;
 									break;
 								}
@@ -229,7 +229,7 @@ public class PollPACERTask {
 					if (ecrDatas.size() == 0 && ecr.getECRId() != null) {
 						ecrDatas = ecrDataRepository.findByEcrIdOrderByVersionDesc(Integer.valueOf(ecr.getECRId()));
 						if (ecrDatas.size() > 0) {
-							logger.debug("ECR Data found with requested ecrId (" + ecr.getECRId() + ") in ECR");
+							logger.info("ECR Data found with requested ecrId (" + ecr.getECRId() + ") in ECR");
 						} else {
 							ecrData = new ECRData(ecr, Integer.valueOf(ecr.getECRId()));
 						}
@@ -539,7 +539,7 @@ public class PollPACERTask {
 			}
 
 			if (pacerJobManagerEndPoint == null || pacerJobManagerEndPoint.isEmpty()) {
-				logger.debug("No PACER Job Manger Endpoint Found. Skipping ECRid: " + ecr.getECRId());
+				logger.info("No PACER Job Manger Endpoint Found. Skipping ECRid: " + ecr.getECRId());
 				continue;
 			}
 
@@ -577,8 +577,16 @@ public class PollPACERTask {
 				String value = patientId.getvalue();
 
 				if (value != null && !value.isEmpty()) {
-					if (type == null)
+					if (type == null) {
 						type = "";
+						patientId.settype(type);
+					}
+
+					if ("SS".equalsIgnoreCase(type) || "SSN".equalsIgnoreCase(type)) {
+						type = "http://hl7.org/fhir/sid/us-ssn";
+						patientId.settype(type);
+					}
+
 					patientIdentifier = ECRData.stringPatientId(patientId);
 
 					if (type.startsWith("http:") || type.startsWith("urn:") || type.startsWith("oid:"))
@@ -622,8 +630,7 @@ public class PollPACERTask {
 		}
 
 		for (Map.Entry<String, JsonNode> entry : ecrQueriesToSend.entrySet()) {
-			System.out.println("PACER url : " + entry.getKey() + " Value : " + entry.getValue().toString());
-			logger.debug("Sending PACER Request to " + entry.getKey());
+			logger.info("PACER url : " + entry.getKey() + ", listElement : " + entry.getValue().toString());
 			sendPacerRequest(entry.getKey(), entry.getValue());
 //					ecrJob.instantUpdate();
 //					ecrJobRepository.save(ecrJob);

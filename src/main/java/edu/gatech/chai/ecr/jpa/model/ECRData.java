@@ -207,7 +207,7 @@ public class ECRData {
 	}
 	
 	static public String stringPatientId(TypeableID patientId) {
-		return patientId.gettype()+"|"+patientId.getvalue();
+		return patientId.gettype().trim()+"|"+patientId.getvalue().trim();
 	}
 	
 	public TypeableID typeablePatientId(String patientId) {

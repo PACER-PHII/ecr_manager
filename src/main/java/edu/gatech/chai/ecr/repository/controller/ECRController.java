@@ -122,8 +122,14 @@ public class ECRController {
 
 	@RequestMapping(value = "/ECR", method = RequestMethod.GET, params = "id")
 	public ResponseEntity<ECR> getECRByECRId(@RequestParam Integer id) {
-		ECRData data = ecrDataRepository.findByEcrIdOrderByVersionDesc(id).get(0);
-		return new ResponseEntity<ECR>(data.getECR(), HttpStatus.OK);
+		ECR ret = new ECR();
+		List<ECRData> ecrDatas = ecrDataRepository.findByEcrIdOrderByVersionDesc(id);
+		if (ecrDatas != null && !ecrDatas.isEmpty()) {
+			ECRData data = ecrDatas.get(0);
+			ret = data.getECR();
+		}
+
+		return new ResponseEntity<ECR>(ret, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/ECR", method = RequestMethod.GET, params = "lastName")

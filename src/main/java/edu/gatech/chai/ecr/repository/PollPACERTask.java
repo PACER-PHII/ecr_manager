@@ -183,11 +183,14 @@ public class PollPACERTask {
 
 		HttpEntity<JsonNode> entity = new HttpEntity<JsonNode>(requestJson, headers);
 
-		ResponseEntity<String> response = restTemplate.postForEntity(pacerJobManagerEndPoint, entity, String.class);
-		if (response.getStatusCode().equals(HttpStatus.CREATED) || response.getStatusCode().equals(HttpStatus.OK)) {
-//			ObjectMapper mapper = new ObjectMapper();
-			String ecrReport = null;
-			try {
+		logger.info("Posting to " + pacerJobManagerEndPoint + " with payload: \n" + requestJson.toPrettyString());
+
+		try {
+			ResponseEntity<String> response = restTemplate.postForEntity(pacerJobManagerEndPoint, entity, String.class);
+			if (response.getStatusCode().equals(HttpStatus.CREATED) || response.getStatusCode().equals(HttpStatus.OK)) {
+//				ObjectMapper mapper = new ObjectMapper();
+				String ecrReport = null;
+			
 				ecrReport = response.getBody();
 				logger.info("updateECR received:" + ecrReport);
 
@@ -275,10 +278,11 @@ public class PollPACERTask {
 				}
 
 				retv = 0;
-			} catch (IOException e) {
-				e.printStackTrace();
-				retv = -1;
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("Posting to PACER-server failed with an error: \n" + e.getMessage());
+			retv = -1;
 		}
 
 		return retv;
@@ -533,7 +537,7 @@ public class PollPACERTask {
 				pacerSource = searchPacerIndexService(identifier, name);
 				if (pacerSource != null) {
 					pacerJobManagerEndPoint = pacerSource.path("serverUrl").asText();
-					logger.debug("Got PACER endpoint=" + pacerJobManagerEndPoint);
+					logger.info("Got PACER endpoint=" + pacerJobManagerEndPoint + " for identifier=" + identifier + " and name=" + name);
 					break;
 				}
 			}
@@ -630,7 +634,7 @@ public class PollPACERTask {
 		}
 
 		for (Map.Entry<String, JsonNode> entry : ecrQueriesToSend.entrySet()) {
-			logger.info("PACER url : " + entry.getKey() + ", listElement : " + entry.getValue().toString());
+			// logger.info("Sending to PACER url : " + entry.getKey() + ", listElement : " + entry.getValue().toString());
 			sendPacerRequest(entry.getKey(), entry.getValue());
 //					ecrJob.instantUpdate();
 //					ecrJobRepository.save(ecrJob);

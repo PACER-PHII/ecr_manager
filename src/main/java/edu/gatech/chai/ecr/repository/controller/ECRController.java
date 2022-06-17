@@ -1,5 +1,9 @@
 package edu.gatech.chai.ecr.repository.controller;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.sql.Connection;
@@ -8,16 +12,22 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -27,8 +37,21 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import ch.qos.logback.core.rolling.TriggeringPolicy;
+import edu.gatech.chai.ecr.jpa.json.CodeableConcept;
+import edu.gatech.chai.ecr.jpa.json.Diagnosis;
 import edu.gatech.chai.ecr.jpa.json.ECR;
+import edu.gatech.chai.ecr.jpa.json.Facility;
+import edu.gatech.chai.ecr.jpa.json.ImmunizationHistory;
+import edu.gatech.chai.ecr.jpa.json.LabOrderCode;
+import edu.gatech.chai.ecr.jpa.json.LabResult;
+import edu.gatech.chai.ecr.jpa.json.Medication;
 import edu.gatech.chai.ecr.jpa.json.Name;
+import edu.gatech.chai.ecr.jpa.json.ParentGuardian;
+import edu.gatech.chai.ecr.jpa.json.Patient;
+import edu.gatech.chai.ecr.jpa.json.Provider;
+import edu.gatech.chai.ecr.jpa.json.TestResult;
+import edu.gatech.chai.ecr.jpa.json.TypeableID;
 import edu.gatech.chai.ecr.jpa.json.utils.AddressUtil;
 import edu.gatech.chai.ecr.jpa.model.ECRData;
 import edu.gatech.chai.ecr.jpa.model.ECRJob;
@@ -118,6 +141,233 @@ public class ECRController {
 		data = data.size() < PAGE_SIZE ? data.subList(0, data.size()) : data.subList(0, PAGE_SIZE);
 		List<ECR> ecrReturnList = transformECRDataToECR(data);
 		return new ResponseEntity<List<ECR>>(ecrReturnList, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/exportCSV", method = RequestMethod.GET, produces = "text/csv")
+	public ResponseEntity<Resource> exportCSV(
+			@RequestParam(name = "page", defaultValue = "0", required = false) Integer page) {
+		
+		String[] csvHeader = {
+			"id", "^provider_id~provider_name~phone~fax~email~facility~address~country^",
+			"facility_id", "facility_name", "facility_phone", "facility_address", "facility_fax", "facility_hospital_unit",
+			"patient_id", "patient_name", "^patient_parents_guardians_name~phone~email", "patient_street_address",
+			"patient_birth_date", "patient_sex", "patient_patientclass", "patient_race", "patient_ethnicity",
+			"patient_preferred_language", "patient_occupation", "patient_pregnant", "^patient_travel_history",
+			"patient_insurance_type", "^patient_immunization_history", "patient_visit_datetime", 
+			"patient_admission_datetime", "patient_date_of_onset", "^patient_symptoms", "^patient_lab_order_code",
+			"patient_placer_order_code", "^patient_diagnosis", "^patient_medication_provided", "patient_death_date",
+			"patient_date_discharged", "patient_laboratory_results", "^patient_trigger_code", "^patient_lab_tests_performed",
+			"sendingApplication", "^notes"};
+
+		List<ECRData> data = new ArrayList<ECRData>();
+		int diffPull = -1;
+		while (diffPull != 0 && data.size() < PAGE_SIZE) {
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
+			List<ECRData> incomingData = ecrDataRepository.findAll(pageable).getContent();
+			int oldSize = data.size();
+			data.addAll(incomingData);
+			data = lintVersionsFromECRDataList(data);
+			diffPull = data.size() - oldSize;
+			page = page + 1;
+		}
+		data = data.size() < PAGE_SIZE ? data.subList(0, data.size()) : data.subList(0, PAGE_SIZE);
+		List<ECR> ecrReturnList = transformECRDataToECR(data);
+
+		List<List<String>> csv = new ArrayList<>();
+		for (ECR ecr : ecrReturnList) {
+			List<String> row = new ArrayList<String>();
+			row.add(ecr.getId());
+			String providers = "";
+			for (Provider provider : ecr.getProvider()) {
+				String providerData = provider.getid() + "~" + provider.getname() + "~" + provider.getphone()
+					+ "~" + provider.getfax() + "~" + provider.getemail() + "~" + provider.getfacility()
+					+ "~" + provider.getaddress() + "~" + provider.getcountry();
+
+				if (providers.isBlank()) {
+					providers = providerData;
+				} else {
+					providers = providers.concat("^" + providerData);
+				}
+			}
+			row.add(providers);
+
+			Facility facility = ecr.getFacility();
+			row.add(facility.getid());
+			row.add(facility.getname());
+			row.add(facility.getphone());
+			row.add(facility.getaddress());
+			row.add(facility.getfax());
+			row.add(facility.gethospitalUnit());
+
+			Patient patient = ecr.getPatient();
+			String idStr = ECRData.stringPatientIds(patient.getid());
+			row.add(idStr);
+			row.add(patient.getname().toString());
+
+			List<ParentGuardian> parentGuardians = patient.getparentsGuardians();
+			String parentGs = "";
+			for (ParentGuardian parentGuardian : parentGuardians) {
+				if (parentGs.isBlank()) {
+					parentGs = parentGuardian.getname() + "~" + parentGuardian.getphone() + "~" + parentGuardian.getemail();
+				} else {
+					parentGs = parentGs.concat("^" + parentGuardian.getname() + "~" + parentGuardian.getphone() + "~" + parentGuardian.getemail());
+				}
+			}
+			row.add(parentGs);
+			row.add(patient.getstreetAddress());
+			row.add(patient.getbirthDate());
+			row.add(patient.getsex());
+			row.add(patient.getpatientClass());
+			row.add(patient.getrace().toString());
+			row.add(patient.getethnicity().toString());
+			row.add(patient.getpreferredLanguage().toString());
+			row.add(patient.getoccupation());
+			if (patient.ispregnant()) {
+				row.add("true");
+			} else {
+				row.add("false");
+			}
+			String travelHistories = "";
+			for (String travelHistory : patient.gettravelHistory()) {
+				if (travelHistories.isBlank()) {
+					travelHistories = travelHistory;
+				} else {
+					travelHistories = travelHistories.concat("^" + travelHistory);
+				}
+			}
+			row.add(travelHistories);
+			row.add(patient.getinsuranceType().toString());
+			String immunizationHistories = "";
+			for ( ImmunizationHistory immunicationHistory : patient.getimmunizationHistory()) {
+				if (immunizationHistories.isBlank()) {
+					immunizationHistories = immunicationHistory.toString();
+				} else {
+					immunizationHistories = immunizationHistories.concat("^"+immunicationHistory.toString());
+				}
+			}
+			row.add(immunizationHistories);
+			row.add(patient.getvisitDateTime());
+			row.add(patient.getadmissionDateTime());
+			row.add(patient.getdateOfOnset());
+			String symptoms = "";
+			for (CodeableConcept symptom : patient.getsymptoms()) {
+				if (symptoms.isBlank()) {
+					symptoms = symptom.toString();
+				} else {
+					symptoms = symptoms.concat("^" + symptom.toString());
+				}
+			}
+			row.add(symptoms);
+			String labOrderCodes = "";
+			for (LabOrderCode labOrderCode : patient.getlabOrderCode()) {
+				if (labOrderCodes.isBlank()) {
+					labOrderCodes = labOrderCode.toString();
+				} else {
+					labOrderCodes = labOrderCodes.concat("^" + labOrderCode.toString());
+				}
+			}
+			row.add(labOrderCodes);
+			row.add(patient.getplacerOrderCode());
+			String diagnoses = "";
+			for (Diagnosis diagnosis : patient.getDiagnosis()) {
+				if (diagnoses.isBlank()) {
+					diagnoses = diagnosis.toString();
+				} else {
+					diagnoses = diagnoses.concat("^" + diagnosis.toString());
+				}
+			}
+			row.add(diagnoses);
+			String medications = "";
+			for (Medication medicationProvided : patient.getMedicationProvided()) {
+				if (medications.isBlank()) {
+					medications = medicationProvided.toString();
+				} else {
+					medications = medications.concat("^" + medicationProvided.toString());
+				}
+			}
+			row.add(medications);
+			row.add(patient.getdeathDate());
+			row.add(patient.getdateDischarged());
+			String labResults = "";
+			for (LabResult labResult : patient.getlaboratoryResults()) {
+				if (labResults.isBlank()) {
+					labResults = labResult.toString();
+				} else {
+					labResults = labResults.concat("^" + labResult.toString());
+				}
+			}
+			row.add(labResults);
+			String triggerCodes = "";
+			for (CodeableConcept triggerCode : patient.gettriggerCode()) {
+				if (triggerCodes.isBlank()) {
+				 	triggerCodes = triggerCodes.toString();
+				} else {
+					triggerCodes = triggerCodes.concat("^" + triggerCodes.toString());
+				}
+			}
+			row.add(triggerCodes);
+			String labTestsPerformeds = "";
+			for (TestResult labTestsPerformed : patient.getlabTestsPerformed()) {
+				if (labTestsPerformeds.isBlank()) {
+					labTestsPerformeds = labTestsPerformed.toString();
+				} else {
+					labTestsPerformeds = labTestsPerformeds.concat("^" + labTestsPerformed.toString());
+				}
+			}
+			row.add(labTestsPerformeds);
+			row.add(ecr.getSendingApplication());
+			String notes = "";
+			for (String note : ecr.getNotes()) {
+				if (notes.isBlank()) {
+					notes = note;
+				} else {
+					notes = notes.concat("^" + note);
+				}
+			}
+			row.add(notes);
+
+			csv.add(row);	
+		}
+
+		ByteArrayInputStream byteArrayOutputStream;
+
+		// closing resources by using a try with resources
+		// https://www.baeldung.com/java-try-with-resources
+		try (
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			// defining the CSV printer
+			CSVPrinter csvPrinter = new CSVPrinter(
+				new PrintWriter(out),
+				// withHeader is optional
+				CSVFormat.DEFAULT.withHeader(csvHeader)
+			);
+		) {
+			// populating the CSV content
+			for (List<String> record : csv)
+				csvPrinter.printRecord(record);
+
+			// writing the underlying stream
+			csvPrinter.flush();
+			byteArrayOutputStream = new ByteArrayInputStream(out.toByteArray());
+	    } catch (IOException e) {
+    	    throw new RuntimeException(e.getMessage());
+    	}
+
+	    InputStreamResource fileInputStream = new InputStreamResource(byteArrayOutputStream);
+
+	    String csvFileName = "ecr.csv";
+
+		// setting HTTP headers
+		HttpHeaders headers = new HttpHeaders();
+		headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + csvFileName);
+		// defining the custom Content-Type
+		headers.set(HttpHeaders.CONTENT_TYPE, "text/csv");
+
+		return new ResponseEntity<>(
+				fileInputStream,
+				headers,
+				HttpStatus.OK
+		);
 	}
 
 	@RequestMapping(value = "/ECR", method = RequestMethod.GET, params = "id")

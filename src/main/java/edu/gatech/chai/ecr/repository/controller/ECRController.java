@@ -146,18 +146,8 @@ public class ECRController {
 	@RequestMapping(value = "/exportCSV", method = RequestMethod.GET, produces = "text/csv")
 	public ResponseEntity<Resource> exportCSV(
 			@RequestParam(name = "page", defaultValue = "0", required = false) Integer page) {
-		
-		String[] csvHeader = {
-			"id", "^provider_id~provider_name~phone~fax~email~facility~address~country^",
-			"facility_id", "facility_name", "facility_phone", "facility_address", "facility_fax", "facility_hospital_unit",
-			"patient_id", "patient_name", "^patient_parents_guardians_name~phone~email", "patient_street_address",
-			"patient_birth_date", "patient_sex", "patient_patientclass", "patient_race", "patient_ethnicity",
-			"patient_preferred_language", "patient_occupation", "patient_pregnant", "^patient_travel_history",
-			"patient_insurance_type", "^patient_immunization_history", "patient_visit_datetime", 
-			"patient_admission_datetime", "patient_date_of_onset", "^patient_symptoms", "^patient_lab_order_code",
-			"patient_placer_order_code", "^patient_diagnosis", "^patient_medication_provided", "patient_death_date",
-			"patient_date_discharged", "patient_laboratory_results", "^patient_trigger_code", "^patient_lab_tests_performed",
-			"sendingApplication", "^notes"};
+
+		List<String> csvHeaderList = new ArrayList<String>();
 
 		List<ECRData> data = new ArrayList<ECRData>();
 		int diffPull = -1;
@@ -176,159 +166,219 @@ public class ECRController {
 		List<List<String>> csv = new ArrayList<>();
 		for (ECR ecr : ecrReturnList) {
 			List<String> row = new ArrayList<String>();
+			csvHeaderList.add("id");
 			row.add(ecr.getId());
-			String providers = "";
-			for (Provider provider : ecr.getProvider()) {
-				String providerData = provider.getid() + "~" + provider.getname() + "~" + provider.getphone()
-					+ "~" + provider.getfax() + "~" + provider.getemail() + "~" + provider.getfacility()
-					+ "~" + provider.getaddress() + "~" + provider.getcountry();
 
-				if (providers.isBlank()) {
-					providers = providerData;
-				} else {
-					providers = providers.concat("^" + providerData);
-				}
+			int index = 1;
+			for (Provider provider : ecr.getProvider()) {
+				csvHeaderList.add("provider_id_" + index);
+				row.add(ECRData.stringPatientId(provider.getid()));
+
+				csvHeaderList.add("provider_name_" + index);
+				row.add(provider.getname());
+				
+				csvHeaderList.add("provider_phone_" + index);
+				row.add(provider.getphone());
+
+				csvHeaderList.add("provider_fax_" + index);
+				row.add(provider.getfax());
+
+				csvHeaderList.add("provider_email_" + index);
+				row.add(provider.getemail());
+
+				csvHeaderList.add("provider_facility_" + index);
+				row.add(provider.getfacility());
+
+				csvHeaderList.add("provider_address_" + index);
+				row.add(provider.getaddress());
+				
+				csvHeaderList.add("provider_country_" + index);
+				row.add(provider.getcountry());
+
+				index++;
 			}
-			row.add(providers);
 
 			Facility facility = ecr.getFacility();
+			csvHeaderList.add("facility_id");
 			row.add(facility.getid());
+			
+			csvHeaderList.add("facility_name");
 			row.add(facility.getname());
+
+			csvHeaderList.add("facility_phone");
 			row.add(facility.getphone());
+
+			csvHeaderList.add("facility_address");
 			row.add(facility.getaddress());
+
+			csvHeaderList.add("facility_fax");
 			row.add(facility.getfax());
+
+			csvHeaderList.add("facility_hospital_unit");
 			row.add(facility.gethospitalUnit());
 
 			Patient patient = ecr.getPatient();
 			String idStr = ECRData.stringPatientIds(patient.getid());
+
+			csvHeaderList.add("patient_id");
 			row.add(idStr);
+
+			csvHeaderList.add("patient_name");
 			row.add(patient.getname().toString());
 
 			List<ParentGuardian> parentGuardians = patient.getparentsGuardians();
 			String parentGs = "";
+			index = 1;
 			for (ParentGuardian parentGuardian : parentGuardians) {
-				if (parentGs.isBlank()) {
-					parentGs = parentGuardian.getname() + "~" + parentGuardian.getphone() + "~" + parentGuardian.getemail();
-				} else {
-					parentGs = parentGs.concat("^" + parentGuardian.getname() + "~" + parentGuardian.getphone() + "~" + parentGuardian.getemail());
-				}
+				csvHeaderList.add("patient_guardian_name_" + index);
+				row.add(parentGuardian.getname().toString());
+
+				csvHeaderList.add("patient_guardian_phone_" + index);
+				row.add(parentGuardian.getphone());
+
+				csvHeaderList.add("patient_guardian_email_" + index);
+				row.add(parentGuardian.getemail());	
+				
+				index++;
 			}
-			row.add(parentGs);
+
+			csvHeaderList.add("patient_address");
 			row.add(patient.getstreetAddress());
+
+			csvHeaderList.add("patient_brithDate");
 			row.add(patient.getbirthDate());
+
+			csvHeaderList.add("patient_sex");
 			row.add(patient.getsex());
+
+			csvHeaderList.add("patient_patientClass");
 			row.add(patient.getpatientClass());
+
+			csvHeaderList.add("patient_race");
 			row.add(patient.getrace().toString());
+
+			csvHeaderList.add("patient_ethnicity");
 			row.add(patient.getethnicity().toString());
+
+			csvHeaderList.add("patient_preferredLanguage");
 			row.add(patient.getpreferredLanguage().toString());
+
+			csvHeaderList.add("patient_occupation");
 			row.add(patient.getoccupation());
+
+			csvHeaderList.add("patient_pregnant");
 			if (patient.ispregnant()) {
 				row.add("true");
 			} else {
 				row.add("false");
 			}
-			String travelHistories = "";
+
+			index = 1;
 			for (String travelHistory : patient.gettravelHistory()) {
-				if (travelHistories.isBlank()) {
-					travelHistories = travelHistory;
-				} else {
-					travelHistories = travelHistories.concat("^" + travelHistory);
-				}
+				csvHeaderList.add("patient_travelHistory_" + index);
+				row.add(travelHistory);
+
+				index++;
 			}
-			row.add(travelHistories);
+
+			csvHeaderList.add("patient_insuranceType");
 			row.add(patient.getinsuranceType().toString());
-			String immunizationHistories = "";
-			for ( ImmunizationHistory immunicationHistory : patient.getimmunizationHistory()) {
-				if (immunizationHistories.isBlank()) {
-					immunizationHistories = immunicationHistory.toString();
-				} else {
-					immunizationHistories = immunizationHistories.concat("^"+immunicationHistory.toString());
-				}
+
+			index = 1;
+			for ( ImmunizationHistory immunizationHistory : patient.getimmunizationHistory()) {
+				csvHeaderList.add("patient_immunizationHistory_" + index);
+				row.add(immunizationHistory.toString());
+
+				index++;
 			}
-			row.add(immunizationHistories);
+
+			csvHeaderList.add("patient_visitDateTime");
 			row.add(patient.getvisitDateTime());
+
+			csvHeaderList.add("patient_admissionDateTime");
 			row.add(patient.getadmissionDateTime());
+
+			csvHeaderList.add("patient_dateOfOnset");
 			row.add(patient.getdateOfOnset());
-			String symptoms = "";
+			
+			index = 1;
 			for (CodeableConcept symptom : patient.getsymptoms()) {
-				if (symptoms.isBlank()) {
-					symptoms = symptom.toString();
-				} else {
-					symptoms = symptoms.concat("^" + symptom.toString());
-				}
+				csvHeaderList.add("patient_symptom_index" + index);
+				row.add(symptom.toString());
+
+				index++;
 			}
-			row.add(symptoms);
-			String labOrderCodes = "";
+
+			index = 1;
 			for (LabOrderCode labOrderCode : patient.getlabOrderCode()) {
-				if (labOrderCodes.isBlank()) {
-					labOrderCodes = labOrderCode.toString();
-				} else {
-					labOrderCodes = labOrderCodes.concat("^" + labOrderCode.toString());
-				}
+				csvHeaderList.add("patient_labOrderCode");
+				row.add(labOrderCode.toString());
+
+				index++;
 			}
-			row.add(labOrderCodes);
+
+			csvHeaderList.add("patient_placerOrderCode");
 			row.add(patient.getplacerOrderCode());
-			String diagnoses = "";
+
+			index =1;
 			for (Diagnosis diagnosis : patient.getDiagnosis()) {
-				if (diagnoses.isBlank()) {
-					diagnoses = diagnosis.toString();
-				} else {
-					diagnoses = diagnoses.concat("^" + diagnosis.toString());
-				}
+				csvHeaderList.add("patient_diagnosis_" + index);
+				row.add(diagnosis.toString());
+
+				index++;
 			}
-			row.add(diagnoses);
-			String medications = "";
+
+			index = 1;
 			for (Medication medicationProvided : patient.getMedicationProvided()) {
-				if (medications.isBlank()) {
-					medications = medicationProvided.toString();
-				} else {
-					medications = medications.concat("^" + medicationProvided.toString());
-				}
+				csvHeaderList.add("patient_medicationProvided_" + index);
+				row.add(medicationProvided.toString());
+
+				index++;
 			}
-			row.add(medications);
+
+			csvHeaderList.add("patient_deathDate");
 			row.add(patient.getdeathDate());
+
+			csvHeaderList.add("patient_dateDischarged");
 			row.add(patient.getdateDischarged());
-			String labResults = "";
+
+			index = 1;
 			for (LabResult labResult : patient.getlaboratoryResults()) {
-				if (labResults.isBlank()) {
-					labResults = labResult.toString();
-				} else {
-					labResults = labResults.concat("^" + labResult.toString());
-				}
+				csvHeaderList.add("patient_laboratoryResult_" + index);
+				row.add(labResult.toString());
+
+				index++;
 			}
-			row.add(labResults);
-			String triggerCodes = "";
+
+			index = 1;
 			for (CodeableConcept triggerCode : patient.gettriggerCode()) {
-				if (triggerCodes.isBlank()) {
-				 	triggerCodes = triggerCodes.toString();
-				} else {
-					triggerCodes = triggerCodes.concat("^" + triggerCodes.toString());
-				}
+				csvHeaderList.add("patient_triggerCode_" + index);
+				row.add(triggerCode.toString());
+
+				index++;
 			}
-			row.add(triggerCodes);
-			String labTestsPerformeds = "";
+
+			index = 1;
 			for (TestResult labTestsPerformed : patient.getlabTestsPerformed()) {
-				if (labTestsPerformeds.isBlank()) {
-					labTestsPerformeds = labTestsPerformed.toString();
-				} else {
-					labTestsPerformeds = labTestsPerformeds.concat("^" + labTestsPerformed.toString());
-				}
+				csvHeaderList.add("patient_labTestsPerformed_" + index);
+				row.add(labTestsPerformed.toString());
+
+				index++;
 			}
-			row.add(labTestsPerformeds);
+
+			csvHeaderList.add("sendingApplication");
 			row.add(ecr.getSendingApplication());
-			String notes = "";
+
+			index = 1;
 			for (String note : ecr.getNotes()) {
-				if (notes.isBlank()) {
-					notes = note;
-				} else {
-					notes = notes.concat("^" + note);
-				}
+				csvHeaderList.add("note_" + index);
+				row.add(note);
 			}
-			row.add(notes);
 
 			csv.add(row);	
 		}
 
+		String[] csvHeader = csvHeaderList.toArray(String[]::new);
 		ByteArrayInputStream byteArrayOutputStream;
 
 		// closing resources by using a try with resources

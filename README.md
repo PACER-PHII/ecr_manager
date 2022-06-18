@@ -19,9 +19,9 @@ Compile the main project.
 mvn clean install
 ```
 
-To deploy the project, copy the war artifact into your tomcat webapp directoy
+To run ecr_manager
 ```
-cp target/ecr-manager-0.0.1-SNAPSHOT.war $CATALINA_BASE/webapps/ecr-manager
+jar -jar target/ecr-manager-0.1.0.jar
 ```
 
 ## Configuring

@@ -164,9 +164,25 @@ public class ECRController {
 		List<ECR> ecrReturnList = transformECRDataToECR(data);
 
 		List<List<String>> csv = new ArrayList<>();
+		int totalEcrSize = ecrReturnList.size();
+
+		// First find the size of columns. As some ECR may have multiple entries, we need walk over all of lists.
+		int numOfColumns = 0;
+		int maxNumOfProviders = 0;
+		for (ECR ecr : ecrReturnList) {
+			int numOfProviders = ecr.getProvider().size();
+			if (numOfProviders > maxNumOfProviders) {
+				maxNumOfProviders = numOfProviders;
+			}
+
+
+		}
+		List<String>[] rows = new ArrayList[totalEcrSize];
+		for (int i = 0; i < totalEcrSize; i++) {
+			rows[i] = new ArrayList<String>();
+		}
 		for (ECR ecr : ecrReturnList) {
 			List<String> row = new ArrayList<String>();
-			csvHeaderList.add("id");
 			row.add(ecr.getId());
 
 			int index = 1;

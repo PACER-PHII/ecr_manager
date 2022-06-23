@@ -587,8 +587,7 @@ public class ECRController {
 
 		Date now = new Date();
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-		String nowInString = formatter.format(now);
-	    String csvFileName = "ecr_" + nowInString + ".csv";
+	    String csvFileName = "ecr_" + formatter.format(now) + ".csv";
 
 		// setting HTTP headers
 		HttpHeaders headers = new HttpHeaders();

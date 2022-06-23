@@ -11,8 +11,10 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -164,7 +166,6 @@ public class ECRController {
 		List<ECR> ecrReturnList = transformECRDataToECR(data);
 
 		List<List<String>> csv = new ArrayList<>();
-		int totalEcrSize = ecrReturnList.size();
 
 		// CSV Header
 		csvHeaderList.add("id");
@@ -584,7 +585,10 @@ public class ECRController {
 
 	    InputStreamResource fileInputStream = new InputStreamResource(byteArrayOutputStream);
 
-	    String csvFileName = "ecr.csv";
+		Date now = new Date();
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+		String nowInString = formatter.format(now);
+	    String csvFileName = "ecr_" + nowInString + ".csv";
 
 		// setting HTTP headers
 		HttpHeaders headers = new HttpHeaders();

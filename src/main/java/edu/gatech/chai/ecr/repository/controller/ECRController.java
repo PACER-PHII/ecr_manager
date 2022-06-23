@@ -166,86 +166,254 @@ public class ECRController {
 		List<List<String>> csv = new ArrayList<>();
 		int totalEcrSize = ecrReturnList.size();
 
+		// CSV Header
+		csvHeaderList.add("id");
+
 		// First find the size of columns. As some ECR may have multiple entries, we need walk over all of lists.
-		int numOfColumns = 0;
+		int index = 1;
 		int maxNumOfProviders = 0;
+
 		for (ECR ecr : ecrReturnList) {
 			int numOfProviders = ecr.getProvider().size();
 			if (numOfProviders > maxNumOfProviders) {
+				int numToWrite = numOfProviders - maxNumOfProviders;
+				for (int i = 0; i < numToWrite; i++) {
+					csvHeaderList.add("Provider_id_" + index);
+					csvHeaderList.add("provider_name_" + index);
+					csvHeaderList.add("provider_phone_" + index);
+					csvHeaderList.add("provider_email_" + index);
+					csvHeaderList.add("provider_fax_" + index);
+					csvHeaderList.add("provider_facility_" + index);
+					csvHeaderList.add("provider_address_" + index);
+					csvHeaderList.add("provider_country_" + index);
+					index++;
+				}
 				maxNumOfProviders = numOfProviders;
 			}
-
-
 		}
-		List<String>[] rows = new ArrayList[totalEcrSize];
-		for (int i = 0; i < totalEcrSize; i++) {
-			rows[i] = new ArrayList<String>();
+
+		csvHeaderList.add("facility_id");
+		csvHeaderList.add("facility_name");
+		csvHeaderList.add("facility_phone");
+		csvHeaderList.add("facility_address");
+		csvHeaderList.add("facility_fax");
+		csvHeaderList.add("facility_hospital_unit");
+		csvHeaderList.add("patient_id");
+		csvHeaderList.add("patient_name");
+
+		index = 1;
+		int maxNumOfParentGuardians = 0;
+		for (ECR ecr : ecrReturnList) {
+			int numOfParentGuardians = ecr.getPatient().getparentsGuardians().size();
+			if (numOfParentGuardians > maxNumOfParentGuardians) {
+				int numToWrite = numOfParentGuardians - maxNumOfParentGuardians;
+				for (int i = 0; i < numToWrite; i++) {
+					csvHeaderList.add("patient_guardian_name_" + index);
+					csvHeaderList.add("patient_guardian_phone_" + index);
+					csvHeaderList.add("patient_guardian_email_" + index);
+					index++;
+				}
+				maxNumOfParentGuardians = numOfParentGuardians;
+			}
 		}
+
+		csvHeaderList.add("patient_address");
+		csvHeaderList.add("patient_brithDate");
+		csvHeaderList.add("patient_sex");
+		csvHeaderList.add("patient_patientClass");
+		csvHeaderList.add("patient_race");
+		csvHeaderList.add("patient_ethnicity");
+		csvHeaderList.add("patient_preferredLanguage");
+		csvHeaderList.add("patient_occupation");
+		csvHeaderList.add("patient_pregnant");
+
+		index = 1;
+		int maxNumOfTravelHistory = 0;
+		for (ECR ecr : ecrReturnList) {
+			int numOfTravelHistory = ecr.getPatient().gettravelHistory().size();
+			if (numOfTravelHistory > maxNumOfTravelHistory) {
+				int numToWrite = numOfTravelHistory - maxNumOfTravelHistory;
+				for (int i = 0; i < numToWrite; i++) {
+					csvHeaderList.add("patient_travelHistory_" + index);
+					index++;
+				}
+				maxNumOfTravelHistory = numOfTravelHistory;
+			}
+		}
+
+		csvHeaderList.add("patient_insuranceType");
+
+		index = 1;
+		int maxNumOfImmunizationHistory = 0;
+		for (ECR ecr : ecrReturnList) {
+			int numOfImmunizationlHistory = ecr.getPatient().getimmunizationHistory().size();
+			if (numOfImmunizationlHistory > maxNumOfImmunizationHistory) {
+				int numToWrite = numOfImmunizationlHistory - maxNumOfImmunizationHistory;
+				for (int i = 0; i < numToWrite; i++) {
+					csvHeaderList.add("patient_immunizationHistory_" + index);
+					index++;
+				}
+				maxNumOfImmunizationHistory = numOfImmunizationlHistory;
+			}
+		}
+
+		csvHeaderList.add("patient_visitDateTime");
+		csvHeaderList.add("patient_admissionDateTime");
+		csvHeaderList.add("patient_dateOfOnset");
+
+		index = 1;
+		int maxNumOfSymptoms = 0;
+		for (ECR ecr : ecrReturnList) {
+			int numOfSymptoms = ecr.getPatient().getsymptoms().size();
+			if (numOfSymptoms > maxNumOfSymptoms) {
+				int numToWrite = numOfSymptoms - maxNumOfSymptoms;
+				for (int i = 0; i < numToWrite; i++) {
+					csvHeaderList.add("patient_symptoms_" + index);
+					index++;
+				}
+				maxNumOfSymptoms = numOfSymptoms;
+			}
+		}
+
+		index = 1;
+		int maxNumOfLabOrderCode = 0;
+		for (ECR ecr : ecrReturnList) {
+			int numOfLabOrderCode = ecr.getPatient().getsymptoms().size();
+			if (numOfLabOrderCode > maxNumOfLabOrderCode) {
+				int numToWrite = numOfLabOrderCode - maxNumOfLabOrderCode;
+				for (int i = 0; i < numToWrite; i++) {
+					csvHeaderList.add("patient_labOrderCode_" + index);
+					index++;
+				}
+				maxNumOfLabOrderCode = numOfLabOrderCode;
+			}
+		}
+
+		csvHeaderList.add("patient_placerOrderCode");
+
+		index = 1;
+		int maxNumOfDiagnosis = 0;
+		for (ECR ecr : ecrReturnList) {
+			int numOfDiagnosis = ecr.getPatient().getsymptoms().size();
+			if (numOfDiagnosis > maxNumOfDiagnosis) {
+				int numToWrite = numOfDiagnosis - maxNumOfDiagnosis;
+				for (int i = 0; i < numToWrite; i++) {
+					csvHeaderList.add("patient_diagnosis_" + index);
+					index++;
+				}
+				maxNumOfDiagnosis = numOfDiagnosis;
+			}
+		}
+
+		index = 1;
+		int maxNumOfMedicationProvided = 0;
+		for (ECR ecr : ecrReturnList) {
+			int numOfMedicationProvided = ecr.getPatient().getsymptoms().size();
+			if (numOfMedicationProvided > maxNumOfMedicationProvided) {
+				int numToWrite = numOfMedicationProvided - maxNumOfMedicationProvided;
+				for (int i = 0; i < numToWrite; i++) {
+					csvHeaderList.add("patient_medicationProvided_" + index);
+					index++;
+				}
+				maxNumOfMedicationProvided = numOfMedicationProvided;
+			}
+		}
+
+		csvHeaderList.add("patient_deathDate");
+		csvHeaderList.add("patient_dateDischarged");
+
+		index = 1;
+		int maxNumOfLaboratoryResult = 0;
+		for (ECR ecr : ecrReturnList) {
+			int numOfLaboratoryResult = ecr.getPatient().getsymptoms().size();
+			if (numOfLaboratoryResult > maxNumOfLaboratoryResult) {
+				int numToWrite = numOfLaboratoryResult - maxNumOfLaboratoryResult;
+				for (int i = 0; i < numToWrite; i++) {
+					csvHeaderList.add("patient_laboratoryResult_" + index);
+					index++;
+				}
+				maxNumOfLaboratoryResult = numOfLaboratoryResult;
+			}
+		}
+
+		index = 1;
+		int maxNumOfTriggerCode = 0;
+		for (ECR ecr : ecrReturnList) {
+			int numOfTriggerCode = ecr.getPatient().getsymptoms().size();
+			if (numOfTriggerCode > maxNumOfTriggerCode) {
+				int numToWrite = numOfTriggerCode - maxNumOfTriggerCode;
+				for (int i = 0; i < numToWrite; i++) {
+					csvHeaderList.add("patient_triggerCode_" + index);
+					index++;
+				}
+				maxNumOfTriggerCode = numOfTriggerCode;
+			}
+		}
+
+		index = 1;
+		int maxNumOfLabTestsPerformed = 0;
+		for (ECR ecr : ecrReturnList) {
+			int numOfLabTestsPerformed = ecr.getPatient().getsymptoms().size();
+			if (numOfLabTestsPerformed > maxNumOfLabTestsPerformed) {
+				int numToWrite = numOfLabTestsPerformed - maxNumOfLabTestsPerformed;
+				for (int i = 0; i < numToWrite; i++) {
+					csvHeaderList.add("patient_labTestsPerformed_" + index);
+					index++;
+				}
+				maxNumOfLabTestsPerformed = numOfLabTestsPerformed;
+			}
+		}
+
+		csvHeaderList.add("sendingApplication");
+
+		index = 1;
+		int maxNumOfNote = 0;
+		for (ECR ecr : ecrReturnList) {
+			int numOfNote = ecr.getPatient().getsymptoms().size();
+			if (numOfNote > maxNumOfNote) {
+				int numToWrite = numOfNote - maxNumOfNote;
+				for (int i = 0; i < numToWrite; i++) {
+					csvHeaderList.add("note_" + index);
+					index++;
+				}
+				maxNumOfNote = numOfNote;
+			}
+		}
+
 		for (ECR ecr : ecrReturnList) {
 			List<String> row = new ArrayList<String>();
-			row.add(ecr.getId());
 
-			int index = 1;
+			row.add(ecr.getECRId());
 			for (Provider provider : ecr.getProvider()) {
-				csvHeaderList.add("provider_id_" + index);
 				row.add(ECRData.stringPatientId(provider.getid()));
-
-				csvHeaderList.add("provider_name_" + index);
 				row.add(provider.getname());
-				
-				csvHeaderList.add("provider_phone_" + index);
 				row.add(provider.getphone());
-
-				csvHeaderList.add("provider_fax_" + index);
 				row.add(provider.getfax());
-
-				csvHeaderList.add("provider_email_" + index);
 				row.add(provider.getemail());
-
-				csvHeaderList.add("provider_facility_" + index);
 				row.add(provider.getfacility());
-
-				csvHeaderList.add("provider_address_" + index);
 				row.add(provider.getaddress());
-				
-				csvHeaderList.add("provider_country_" + index);
 				row.add(provider.getcountry());
-
 				index++;
+			}
+			for (int i = 0; i < maxNumOfProviders-ecr.getProvider().size(); i++) {
+				row.add("");
 			}
 
 			Facility facility = ecr.getFacility();
-			csvHeaderList.add("facility_id");
 			row.add(facility.getid());
-			
-			csvHeaderList.add("facility_name");
 			row.add(facility.getname());
-
-			csvHeaderList.add("facility_phone");
 			row.add(facility.getphone());
-
-			csvHeaderList.add("facility_address");
 			row.add(facility.getaddress());
-
-			csvHeaderList.add("facility_fax");
 			row.add(facility.getfax());
-
-			csvHeaderList.add("facility_hospital_unit");
 			row.add(facility.gethospitalUnit());
 
 			Patient patient = ecr.getPatient();
 			String idStr = ECRData.stringPatientIds(patient.getid());
-
-			csvHeaderList.add("patient_id");
 			row.add(idStr);
-
-			csvHeaderList.add("patient_name");
 			row.add(patient.getname().toString());
 
-			List<ParentGuardian> parentGuardians = patient.getparentsGuardians();
-			String parentGs = "";
 			index = 1;
-			for (ParentGuardian parentGuardian : parentGuardians) {
+			for (ParentGuardian parentGuardian : patient.getparentsGuardians()) {
 				csvHeaderList.add("patient_guardian_name_" + index);
 				row.add(parentGuardian.getname().toString());
 
@@ -257,32 +425,18 @@ public class ECRController {
 				
 				index++;
 			}
-
-			csvHeaderList.add("patient_address");
+			for (int i = 0; i < maxNumOfParentGuardians-patient.getparentsGuardians().size(); i++) {
+				row.add("");
+			}
+			
 			row.add(patient.getstreetAddress());
-
-			csvHeaderList.add("patient_brithDate");
 			row.add(patient.getbirthDate());
-
-			csvHeaderList.add("patient_sex");
 			row.add(patient.getsex());
-
-			csvHeaderList.add("patient_patientClass");
 			row.add(patient.getpatientClass());
-
-			csvHeaderList.add("patient_race");
 			row.add(patient.getrace().toString());
-
-			csvHeaderList.add("patient_ethnicity");
 			row.add(patient.getethnicity().toString());
-
-			csvHeaderList.add("patient_preferredLanguage");
 			row.add(patient.getpreferredLanguage().toString());
-
-			csvHeaderList.add("patient_occupation");
 			row.add(patient.getoccupation());
-
-			csvHeaderList.add("patient_pregnant");
 			if (patient.ispregnant()) {
 				row.add("true");
 			} else {
@@ -291,104 +445,113 @@ public class ECRController {
 
 			index = 1;
 			for (String travelHistory : patient.gettravelHistory()) {
-				csvHeaderList.add("patient_travelHistory_" + index);
 				row.add(travelHistory);
 
 				index++;
 			}
+			for (int i = 0; i < maxNumOfTravelHistory-patient.gettravelHistory().size(); i++) {
+				row.add("");
+			}
 
-			csvHeaderList.add("patient_insuranceType");
 			row.add(patient.getinsuranceType().toString());
 
 			index = 1;
 			for ( ImmunizationHistory immunizationHistory : patient.getimmunizationHistory()) {
-				csvHeaderList.add("patient_immunizationHistory_" + index);
 				row.add(immunizationHistory.toString());
 
 				index++;
 			}
+			for (int i = 0; i < maxNumOfImmunizationHistory-patient.getimmunizationHistory().size(); i++) {
+				row.add("");
+			}
 
-			csvHeaderList.add("patient_visitDateTime");
 			row.add(patient.getvisitDateTime());
-
-			csvHeaderList.add("patient_admissionDateTime");
 			row.add(patient.getadmissionDateTime());
-
-			csvHeaderList.add("patient_dateOfOnset");
 			row.add(patient.getdateOfOnset());
 			
 			index = 1;
 			for (CodeableConcept symptom : patient.getsymptoms()) {
-				csvHeaderList.add("patient_symptom_index" + index);
 				row.add(symptom.toString());
 
 				index++;
 			}
+			for (int i = 0; i < maxNumOfSymptoms-patient.getsymptoms().size(); i++) {
+				row.add("");
+			}
 
 			index = 1;
 			for (LabOrderCode labOrderCode : patient.getlabOrderCode()) {
-				csvHeaderList.add("patient_labOrderCode");
 				row.add(labOrderCode.toString());
 
 				index++;
 			}
+			for (int i = 0; i < maxNumOfLabOrderCode-patient.getlabOrderCode().size(); i++) {
+				row.add("");
+			}
 
-			csvHeaderList.add("patient_placerOrderCode");
 			row.add(patient.getplacerOrderCode());
 
 			index =1;
 			for (Diagnosis diagnosis : patient.getDiagnosis()) {
-				csvHeaderList.add("patient_diagnosis_" + index);
 				row.add(diagnosis.toString());
 
 				index++;
 			}
+			for (int i = 0; i < maxNumOfDiagnosis-patient.getDiagnosis().size(); i++) {
+				row.add("");
+			}
 
 			index = 1;
 			for (Medication medicationProvided : patient.getMedicationProvided()) {
-				csvHeaderList.add("patient_medicationProvided_" + index);
 				row.add(medicationProvided.toString());
 
 				index++;
 			}
+			for (int i = 0; i < maxNumOfMedicationProvided-patient.getMedicationProvided().size(); i++) {
+				row.add("");
+			}
 
-			csvHeaderList.add("patient_deathDate");
 			row.add(patient.getdeathDate());
-
-			csvHeaderList.add("patient_dateDischarged");
 			row.add(patient.getdateDischarged());
 
 			index = 1;
 			for (LabResult labResult : patient.getlaboratoryResults()) {
-				csvHeaderList.add("patient_laboratoryResult_" + index);
 				row.add(labResult.toString());
 
 				index++;
 			}
+			for (int i = 0; i < maxNumOfLaboratoryResult-patient.getlaboratoryResults().size(); i++) {
+				row.add("");
+			}
 
 			index = 1;
 			for (CodeableConcept triggerCode : patient.gettriggerCode()) {
-				csvHeaderList.add("patient_triggerCode_" + index);
 				row.add(triggerCode.toString());
 
 				index++;
 			}
+			for (int i = 0; i < maxNumOfTriggerCode-patient.gettriggerCode().size(); i++) {
+				row.add("");
+			}
 
 			index = 1;
 			for (TestResult labTestsPerformed : patient.getlabTestsPerformed()) {
-				csvHeaderList.add("patient_labTestsPerformed_" + index);
 				row.add(labTestsPerformed.toString());
 
 				index++;
 			}
+			for (int i = 0; i < maxNumOfLabTestsPerformed-patient.getlabTestsPerformed().size(); i++) {
+				row.add("");
+			}
 
-			csvHeaderList.add("sendingApplication");
 			row.add(ecr.getSendingApplication());
 
 			index = 1;
 			for (String note : ecr.getNotes()) {
-				csvHeaderList.add("note_" + index);
 				row.add(note);
+			}
+			for (int i = 0; i < maxNumOfNote-ecr.getNotes().size(); i++) {
+				row.add("");
 			}
 
 			csv.add(row);	

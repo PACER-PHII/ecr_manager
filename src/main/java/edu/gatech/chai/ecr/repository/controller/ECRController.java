@@ -173,7 +173,6 @@ public class ECRController {
 		// First find the size of columns. As some ECR may have multiple entries, we need walk over all of lists.
 		int index = 1;
 		int maxNumOfProviders = 0;
-
 		for (ECR ecr : ecrReturnList) {
 			int numOfProviders = ecr.getProvider().size();
 			if (numOfProviders > maxNumOfProviders) {
@@ -279,7 +278,7 @@ public class ECRController {
 		index = 1;
 		int maxNumOfLabOrderCode = 0;
 		for (ECR ecr : ecrReturnList) {
-			int numOfLabOrderCode = ecr.getPatient().getsymptoms().size();
+			int numOfLabOrderCode = ecr.getPatient().getlabOrderCode().size();
 			if (numOfLabOrderCode > maxNumOfLabOrderCode) {
 				int numToWrite = numOfLabOrderCode - maxNumOfLabOrderCode;
 				for (int i = 0; i < numToWrite; i++) {
@@ -295,7 +294,7 @@ public class ECRController {
 		index = 1;
 		int maxNumOfDiagnosis = 0;
 		for (ECR ecr : ecrReturnList) {
-			int numOfDiagnosis = ecr.getPatient().getsymptoms().size();
+			int numOfDiagnosis = ecr.getPatient().getDiagnosis().size();
 			if (numOfDiagnosis > maxNumOfDiagnosis) {
 				int numToWrite = numOfDiagnosis - maxNumOfDiagnosis;
 				for (int i = 0; i < numToWrite; i++) {
@@ -309,7 +308,7 @@ public class ECRController {
 		index = 1;
 		int maxNumOfMedicationProvided = 0;
 		for (ECR ecr : ecrReturnList) {
-			int numOfMedicationProvided = ecr.getPatient().getsymptoms().size();
+			int numOfMedicationProvided = ecr.getPatient().getMedicationProvided().size();
 			if (numOfMedicationProvided > maxNumOfMedicationProvided) {
 				int numToWrite = numOfMedicationProvided - maxNumOfMedicationProvided;
 				for (int i = 0; i < numToWrite; i++) {
@@ -326,7 +325,7 @@ public class ECRController {
 		index = 1;
 		int maxNumOfLaboratoryResult = 0;
 		for (ECR ecr : ecrReturnList) {
-			int numOfLaboratoryResult = ecr.getPatient().getsymptoms().size();
+			int numOfLaboratoryResult = ecr.getPatient().getlaboratoryResults().size();
 			if (numOfLaboratoryResult > maxNumOfLaboratoryResult) {
 				int numToWrite = numOfLaboratoryResult - maxNumOfLaboratoryResult;
 				for (int i = 0; i < numToWrite; i++) {
@@ -340,7 +339,7 @@ public class ECRController {
 		index = 1;
 		int maxNumOfTriggerCode = 0;
 		for (ECR ecr : ecrReturnList) {
-			int numOfTriggerCode = ecr.getPatient().getsymptoms().size();
+			int numOfTriggerCode = ecr.getPatient().gettriggerCode().size();
 			if (numOfTriggerCode > maxNumOfTriggerCode) {
 				int numToWrite = numOfTriggerCode - maxNumOfTriggerCode;
 				for (int i = 0; i < numToWrite; i++) {
@@ -354,7 +353,7 @@ public class ECRController {
 		index = 1;
 		int maxNumOfLabTestsPerformed = 0;
 		for (ECR ecr : ecrReturnList) {
-			int numOfLabTestsPerformed = ecr.getPatient().getsymptoms().size();
+			int numOfLabTestsPerformed = ecr.getPatient().getlabTestsPerformed().size();
 			if (numOfLabTestsPerformed > maxNumOfLabTestsPerformed) {
 				int numToWrite = numOfLabTestsPerformed - maxNumOfLabTestsPerformed;
 				for (int i = 0; i < numToWrite; i++) {
@@ -370,7 +369,7 @@ public class ECRController {
 		index = 1;
 		int maxNumOfNote = 0;
 		for (ECR ecr : ecrReturnList) {
-			int numOfNote = ecr.getPatient().getsymptoms().size();
+			int numOfNote = ecr.getNotes().size();
 			if (numOfNote > maxNumOfNote) {
 				int numToWrite = numOfNote - maxNumOfNote;
 				for (int i = 0; i < numToWrite; i++) {
@@ -389,14 +388,20 @@ public class ECRController {
 				row.add(ECRData.stringPatientId(provider.getid()));
 				row.add(provider.getname());
 				row.add(provider.getphone());
-				row.add(provider.getfax());
 				row.add(provider.getemail());
+				row.add(provider.getfax());
 				row.add(provider.getfacility());
 				row.add(provider.getaddress());
 				row.add(provider.getcountry());
-				index++;
 			}
 			for (int i = 0; i < maxNumOfProviders-ecr.getProvider().size(); i++) {
+				row.add("");
+				row.add("");
+				row.add("");
+				row.add("");
+				row.add("");
+				row.add("");
+				row.add("");
 				row.add("");
 			}
 
@@ -413,20 +418,14 @@ public class ECRController {
 			row.add(idStr);
 			row.add(patient.getname().toString());
 
-			index = 1;
 			for (ParentGuardian parentGuardian : patient.getparentsGuardians()) {
-				csvHeaderList.add("patient_guardian_name_" + index);
 				row.add(parentGuardian.getname().toString());
-
-				csvHeaderList.add("patient_guardian_phone_" + index);
 				row.add(parentGuardian.getphone());
-
-				csvHeaderList.add("patient_guardian_email_" + index);
-				row.add(parentGuardian.getemail());	
-				
-				index++;
+				row.add(parentGuardian.getemail());					
 			}
 			for (int i = 0; i < maxNumOfParentGuardians-patient.getparentsGuardians().size(); i++) {
+				row.add("");
+				row.add("");
 				row.add("");
 			}
 			
@@ -444,11 +443,8 @@ public class ECRController {
 				row.add("false");
 			}
 
-			index = 1;
 			for (String travelHistory : patient.gettravelHistory()) {
 				row.add(travelHistory);
-
-				index++;
 			}
 			for (int i = 0; i < maxNumOfTravelHistory-patient.gettravelHistory().size(); i++) {
 				row.add("");
@@ -456,11 +452,8 @@ public class ECRController {
 
 			row.add(patient.getinsuranceType().toString());
 
-			index = 1;
 			for ( ImmunizationHistory immunizationHistory : patient.getimmunizationHistory()) {
 				row.add(immunizationHistory.toString());
-
-				index++;
 			}
 			for (int i = 0; i < maxNumOfImmunizationHistory-patient.getimmunizationHistory().size(); i++) {
 				row.add("");
@@ -470,21 +463,15 @@ public class ECRController {
 			row.add(patient.getadmissionDateTime());
 			row.add(patient.getdateOfOnset());
 			
-			index = 1;
 			for (CodeableConcept symptom : patient.getsymptoms()) {
 				row.add(symptom.toString());
-
-				index++;
 			}
 			for (int i = 0; i < maxNumOfSymptoms-patient.getsymptoms().size(); i++) {
 				row.add("");
 			}
 
-			index = 1;
 			for (LabOrderCode labOrderCode : patient.getlabOrderCode()) {
 				row.add(labOrderCode.toString());
-
-				index++;
 			}
 			for (int i = 0; i < maxNumOfLabOrderCode-patient.getlabOrderCode().size(); i++) {
 				row.add("");
@@ -492,21 +479,15 @@ public class ECRController {
 
 			row.add(patient.getplacerOrderCode());
 
-			index =1;
 			for (Diagnosis diagnosis : patient.getDiagnosis()) {
 				row.add(diagnosis.toString());
-
-				index++;
 			}
 			for (int i = 0; i < maxNumOfDiagnosis-patient.getDiagnosis().size(); i++) {
 				row.add("");
 			}
 
-			index = 1;
 			for (Medication medicationProvided : patient.getMedicationProvided()) {
 				row.add(medicationProvided.toString());
-
-				index++;
 			}
 			for (int i = 0; i < maxNumOfMedicationProvided-patient.getMedicationProvided().size(); i++) {
 				row.add("");
@@ -515,31 +496,22 @@ public class ECRController {
 			row.add(patient.getdeathDate());
 			row.add(patient.getdateDischarged());
 
-			index = 1;
 			for (LabResult labResult : patient.getlaboratoryResults()) {
 				row.add(labResult.toString());
-
-				index++;
 			}
 			for (int i = 0; i < maxNumOfLaboratoryResult-patient.getlaboratoryResults().size(); i++) {
 				row.add("");
 			}
 
-			index = 1;
 			for (CodeableConcept triggerCode : patient.gettriggerCode()) {
 				row.add(triggerCode.toString());
-
-				index++;
 			}
 			for (int i = 0; i < maxNumOfTriggerCode-patient.gettriggerCode().size(); i++) {
 				row.add("");
 			}
 
-			index = 1;
 			for (TestResult labTestsPerformed : patient.getlabTestsPerformed()) {
 				row.add(labTestsPerformed.toString());
-
-				index++;
 			}
 			for (int i = 0; i < maxNumOfLabTestsPerformed-patient.getlabTestsPerformed().size(); i++) {
 				row.add("");
@@ -547,7 +519,6 @@ public class ECRController {
 
 			row.add(ecr.getSendingApplication());
 
-			index = 1;
 			for (String note : ecr.getNotes()) {
 				row.add(note);
 			}

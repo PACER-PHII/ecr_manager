@@ -212,12 +212,18 @@ public class ECRData {
 	}
 	
 	static public String stringPatientId(TypeableID patientId) {
-		if (patientId.getvalue().isBlank()) {
+		String patientIdValue = patientId.getvalue();
+		String patientIdType = patientId.gettype();
+		
+		if (patientIdValue == null || patientIdValue.isBlank()) {
 			log.warn("PatientId does not have a value.");
 			return "";
 		}
 
-		return patientId.gettype().trim()+"|"+patientId.getvalue().trim();
+		if (patientIdType == null)
+			patientIdType = "";
+
+		return patientId.gettype().trim()+"|"+patientIdValue.trim();
 	}
 	
 	public TypeableID typeablePatientId(String patientId) {

@@ -106,6 +106,7 @@ public class ECRController {
 			if (ecrs != null && ecrs.size() > 0) {
 				data = ecrs.get(0);
 				data.update(ecr);
+				log.info("ELR received for an existing case, id="+ecr.getECRId());
 			}
 		}
 

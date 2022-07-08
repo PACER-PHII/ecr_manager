@@ -14,6 +14,9 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import edu.gatech.chai.ecr.jpa.json.ECR;
 import edu.gatech.chai.ecr.jpa.json.Name;
 import edu.gatech.chai.ecr.jpa.json.Patient;
@@ -24,6 +27,8 @@ import edu.gatech.chai.ecr.jpa.json.utils.ECRJsonConverter;
 @Entity
 @Table(name = "ecr_data", schema = "ecr")
 public class ECRData {
+	private static final Logger log = LoggerFactory.getLogger(ECRData.class);
+
 	@Id
 	@Column(name = "case_report_key")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -208,9 +213,10 @@ public class ECRData {
 	
 	static public String stringPatientId(TypeableID patientId) {
 		if (patientId.getvalue().isBlank()) {
+			log.warn("PatientId does not have a value.");
 			return "";
 		}
-		
+
 		return patientId.gettype().trim()+"|"+patientId.getvalue().trim();
 	}
 	
@@ -250,10 +256,13 @@ public class ECRData {
 	static public String stringPatientIds(List<TypeableID> patientIdList) {
 		String retVal = new String();
 		for (TypeableID patientId : patientIdList) {
+			String patientIdString = ECRData.stringPatientId(patientId);
+			if (patientIdString.isBlank()) continue;
+
 			if (retVal.isEmpty()) {
-				retVal = retVal.concat(ECRData.stringPatientId(patientId));
+				retVal = retVal.concat(patientIdString);
 			} else {
-				retVal = retVal.concat("^"+ECRData.stringPatientId(patientId));
+				retVal = retVal.concat("^"+patientIdString);
 			}
 		}
 		

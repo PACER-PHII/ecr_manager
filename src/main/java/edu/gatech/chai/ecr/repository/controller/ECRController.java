@@ -96,19 +96,34 @@ public class ECRController {
 	@RequestMapping(value = "/ECR", method = RequestMethod.POST)
 	public ResponseEntity<ECR> postNewECR(@RequestBody ECR ecr) {
 		ECRData data = null;
-		Name name = ecr.getPatient().getname();
-		if (name != null) {
-			String firstName = name.getgiven();
-			String lastName = name.getfamily();
-			String zipCode = AddressUtil.findZip(ecr.getPatient().getstreetAddress());
-			List<ECRData> ecrs = ecrDataRepository.findByLastNameAndFirstNameAndZipCodeOrderByVersionDesc(lastName,
-					firstName, zipCode, PageRequest.of(0, PAGE_SIZE));
-			if (ecrs != null && ecrs.size() > 0) {
-				data = ecrs.get(0);
-				data.update(ecr);
-				log.info("ELR received for an existing case, id="+ecr.getECRId());
+		Patient patient = ecr.getPatient();
+		List<TypeableID> patientIdList = patientIdList = patient.getid();
+		if (patientIdList != null) {
+			for (TypeableID patientIdType : patient.getid()) {
+				String patientId = ECRData.stringPatientId(patientIdType);
+				List<ECRData> ecrs = ecrDataRepository.findByPatientIdsContainingIgnoreCase(patientId);
+				if (ecrs != null && ecrs.size() > 0) {
+					data = ecrs.get(0);
+					data.update(ecr);
+					log.info("ELR received for an existing case, id=" + ecr.getECRId());
+					break;
+				}
 			}
 		}
+
+		// Name name = ecr.getPatient().getname();
+		// if (name != null) {
+		// 	String firstName = name.getgiven();
+		// 	String lastName = name.getfamily();
+		// 	String zipCode = AddressUtil.findZip(ecr.getPatient().getstreetAddress());
+		// 	List<ECRData> ecrs = ecrDataRepository.findByLastNameAndFirstNameAndZipCodeOrderByVersionDesc(lastName,
+		// 			firstName, zipCode, PageRequest.of(0, PAGE_SIZE));
+		// 	if (ecrs != null && ecrs.size() > 0) {
+		// 		data = ecrs.get(0);
+		// 		data.update(ecr);
+		// 		log.info("ELR received for an existing case, id="+ecr.getECRId());
+		// 	}
+		// }
 
 		if (data == null) {
 			data = new ECRData(ecr, currentId.incrementAndGet());

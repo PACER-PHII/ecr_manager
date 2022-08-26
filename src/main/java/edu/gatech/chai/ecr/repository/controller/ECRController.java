@@ -39,7 +39,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import ch.qos.logback.core.rolling.TriggeringPolicy;
 import edu.gatech.chai.ecr.jpa.json.CodeableConcept;
 import edu.gatech.chai.ecr.jpa.json.Diagnosis;
 import edu.gatech.chai.ecr.jpa.json.ECR;
@@ -53,7 +52,6 @@ import edu.gatech.chai.ecr.jpa.json.ParentGuardian;
 import edu.gatech.chai.ecr.jpa.json.Patient;
 import edu.gatech.chai.ecr.jpa.json.Provider;
 import edu.gatech.chai.ecr.jpa.json.TestResult;
-import edu.gatech.chai.ecr.jpa.json.TypeableID;
 import edu.gatech.chai.ecr.jpa.json.utils.AddressUtil;
 import edu.gatech.chai.ecr.jpa.model.ECRData;
 import edu.gatech.chai.ecr.jpa.model.ECRJob;

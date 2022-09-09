@@ -52,6 +52,7 @@ import edu.gatech.chai.ecr.jpa.json.ParentGuardian;
 import edu.gatech.chai.ecr.jpa.json.Patient;
 import edu.gatech.chai.ecr.jpa.json.Provider;
 import edu.gatech.chai.ecr.jpa.json.TestResult;
+import edu.gatech.chai.ecr.jpa.json.TypeableID;
 import edu.gatech.chai.ecr.jpa.json.utils.AddressUtil;
 import edu.gatech.chai.ecr.jpa.model.ECRData;
 import edu.gatech.chai.ecr.jpa.model.ECRJob;

@@ -96,7 +96,7 @@ public class ECRController {
 	public ResponseEntity<ECR> postNewECR(@RequestBody ECR ecr) {
 		ECRData data = null;
 		Patient patient = ecr.getPatient();
-		List<TypeableID> patientIdList = patientIdList = patient.getid();
+		List<TypeableID> patientIdList = patient.getid();
 		if (patientIdList != null) {
 			for (TypeableID patientIdType : patient.getid()) {
 				String patientId = ECRData.stringPatientId(patientIdType);

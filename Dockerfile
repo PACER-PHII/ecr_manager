@@ -3,7 +3,7 @@
 FROM maven as builder
 COPY . /usr/src/app
 WORKDIR /usr/src/app
-RUN ./mvnw clean install
+RUN mvn clean install
 
 #FROM tomcat:alpine
 FROM openjdk

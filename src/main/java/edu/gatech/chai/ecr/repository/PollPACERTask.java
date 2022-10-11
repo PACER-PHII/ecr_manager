@@ -255,25 +255,23 @@ public class PollPACERTask {
 					ecrDataRepository.save(ecrData);
 
 					// Ok, now we update job entry.
-					ECRJob ecrJob = null;
+					boolean jobFound = false;
 					if (patientIdentifier != null) {
 						List<ECRJob> ecrJobs = ecrJobRepository.findByPatientIdContainingIgnoreCase(patientIdentifier);
-						if (ecrJobs.size() > 0) {
-							ecrJob = ecrJobs.get(0);
+						for (ECRJob myEcrJob : ecrJobs) {
+							myEcrJob.instantUpdate();
+							ecrJobRepository.save(myEcrJob);	
+							jobFound = true;
 						}
 					}
 
-					if (ecrJob == null) {
+					if (jobFound == false) {
 						List<ECRJob> ecrJobs = ecrJobRepository
 								.findByReportIdOrderByIdDesc(Integer.valueOf(ecr.getECRId()));
-						if (ecrJobs.size() > 0) {
-							ecrJob = ecrJobs.get(0);
+						for (ECRJob myEcrJob : ecrJobs) {
+							myEcrJob.instantUpdate();
+							ecrJobRepository.save(myEcrJob);	
 						}
-					}
-
-					if (ecrJob != null) {
-						ecrJob.instantUpdate();
-						ecrJobRepository.save(ecrJob);
 					}
 				}
 

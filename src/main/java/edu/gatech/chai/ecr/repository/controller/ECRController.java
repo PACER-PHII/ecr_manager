@@ -126,13 +126,18 @@ public class ECRController {
 		
 		// See if this is in the job list.
 		List<ECRJob> ecrJobs = ecrJobRepository.findByReportIdOrderByIdDesc(data.getId());
+		ECRJob ecrJob;
 		if (ecrJobs == null || ecrJobs.size() == 0) {
-			ECRJob ecrJob = new ECRJob(data);
-			ecrJob.startRun();
-			
-			// Add this to the job.
-			ecrJobRepository.save(ecrJob);
+			ecrJob = new ECRJob(data);
+		} else {
+			ecrJob = ecrJobs.get(0);
 		}
+
+		ecrJob.startRun();
+			
+		// Add this to the job.
+		ecrJobRepository.save(ecrJob);
+
 		return new ResponseEntity<ECR>(data.getECR(), HttpStatus.CREATED);
 	}
 

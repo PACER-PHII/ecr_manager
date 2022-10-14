@@ -234,6 +234,8 @@ public class PollPACERTask {
 						if (ecrDatas.size() > 0) {
 							logger.info("ECR Data found with requested ecrId (" + ecr.getECRId() + ") in ECR");
 						} else {
+							// initial case report not found. this is an error.
+							logger.error("Inital Case Report Not found for ecr id = " + ecr.getECRId() + " and patientID = " + patientIdentifier);
 							ecrData = new ECRData(ecr, Integer.valueOf(ecr.getECRId()));
 						}
 					}

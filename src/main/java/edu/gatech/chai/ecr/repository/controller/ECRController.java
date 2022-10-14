@@ -99,7 +99,7 @@ public class ECRController {
 				if (ecrs != null && ecrs.size() > 0) {
 					data = ecrs.get(0);
 					data.update(ecr);
-					log.info("ELR received for an existing case, id=" + ecr.getECRId());
+					log.info("ELR received for an existing case, case_report_key=" + data.getId());
 					break;
 				}
 			}
@@ -125,7 +125,7 @@ public class ECRController {
 		ecrDataRepository.save(data);
 		
 		// See if this is in the job list.
-		List<ECRJob> ecrJobs = ecrJobRepository.findByReportIdOrderByIdDesc(data.getECRId());
+		List<ECRJob> ecrJobs = ecrJobRepository.findByReportIdOrderByIdDesc(data.getId());
 		if (ecrJobs == null || ecrJobs.size() == 0) {
 			ECRJob ecrJob = new ECRJob(data);
 			ecrJob.startRun();

@@ -1,5 +1,6 @@
 package edu.gatech.chai.ecr.jpa.model;
 
+import java.util.Calendar;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -10,6 +11,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Entity
 @Table(name = "ecr_job", schema = "ecr")
@@ -37,6 +41,8 @@ public class ECRJob {
 	@Column(name = "last_update_date")
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date lastUpdateDate = new Date();
+
+	private static final Logger logger = LoggerFactory.getLogger(ECRJob.class);
 
 	public ECRJob() {
 	}
@@ -139,21 +145,42 @@ public class ECRJob {
 		statusCode = "P";
 	}
 
-	public void finishRun() {
-		updateCount++;
-		if (updateCount >= maxUpdates) {
-			statusCode = "C";
-		} else {
-			statusCode = "A";
-		}
-		lastUpdateDate = new Date();
-	}
-
 	public void cancelJob() {
 		statusCode = "I";
 	}
 
-	public void instantUpdate() {
-		finishRun();
+	public static String R = "R";  	// Requesting
+	public static String A = "A";	// Accomplished
+	public static String C = "C";	// Cancelled
+	public static String W = "W";	// Withdrawn
+	public static String E = "E";  	// Error
+	public static Integer HOLD_IN_MIN = 5;
+
+	public void updateQueryStatus(String status) {
+		lastUpdateDate = new Date();
+
+		updateCount++;
+		if (updateCount >= maxUpdates) {
+			logger.info("Max Count reached for ECR JobId = " + id);
+			statusCode = ECRJob.C;
+			return;
+		}
+
+		if (status == null || status.isEmpty()) {
+			logger.warn("Status is null or empty for ECR JobId = " + id);
+			statusCode = ECRJob.C;
+			return;
+		}
+		
+		statusCode = status;
+		if (ECRJob.R.equals(status)) {
+			// Increase the wait time by 5 min
+			logger.warn("Update try count = " + (updateCount-1) + " failed for ECR JobId = " + id);
+
+			Calendar c = Calendar.getInstance();
+			c.setTime(lastUpdateDate);
+			c.add(Calendar.MINUTE, ECRJob.HOLD_IN_MIN*updateCount);
+			nextRunDate = c.getTime();
+		} 
 	}
 }

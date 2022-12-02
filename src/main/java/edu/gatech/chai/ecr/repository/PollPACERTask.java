@@ -22,8 +22,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,10 +123,19 @@ public class PollPACERTask {
 		return null;
 	}
 
-	private int sendPacerRequest(String pacerJobManagerEndPoint, JsonNode query) {
+	private int sendPacerRequest(String pacerJobManagerEndPoint, JsonNode query, ECRJob ecrJob) {
 		int retv = -1;
 
-		CloseableHttpClient httpClient = HttpClients.custom().setSSLHostnameVerifier(new NoopHostnameVerifier()).build();
+		int timeout = 600;
+		RequestConfig config = RequestConfig.custom()
+			.setConnectTimeout(timeout * 1000)
+			.setConnectionRequestTimeout(timeout * 1000)
+			.setSocketTimeout(timeout * 1000).build();
+		CloseableHttpClient httpClient = HttpClients.custom()
+			.setDefaultRequestConfig(config)
+			.setSSLHostnameVerifier(new NoopHostnameVerifier())
+			.build();
+
 		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
 		requestFactory.setHttpClient(httpClient);
 
@@ -257,29 +268,40 @@ public class PollPACERTask {
 					ecrDataRepository.save(ecrData);
 
 					// Ok, now we update job entry.
-					boolean jobFound = false;
-					if (patientIdentifier != null) {
-						List<ECRJob> ecrJobs = ecrJobRepository.findByPatientIdContainingIgnoreCase(patientIdentifier);
-						for (ECRJob myEcrJob : ecrJobs) {
-							myEcrJob.instantUpdate();
-							ecrJobRepository.save(myEcrJob);	
-							jobFound = true;
-						}
-					}
+					ecrJob.updateQueryStatus(ECRJob.A);
+					ecrJobRepository.save(ecrJob);
 
-					if (jobFound == false) {
-						List<ECRJob> ecrJobs = ecrJobRepository
-								.findByReportIdOrderByIdDesc(Integer.valueOf(ecr.getECRId()));
-						for (ECRJob myEcrJob : ecrJobs) {
-							myEcrJob.instantUpdate();
-							ecrJobRepository.save(myEcrJob);	
-						}
-					}
+
+					// boolean jobFound = false;
+					// if (patientIdentifier != null) {
+					// 	List<ECRJob> ecrJobs = ecrJobRepository.findByPatientIdContainingIgnoreCase(patientIdentifier);
+					// 	for (ECRJob myEcrJob : ecrJobs) {
+					// 		myEcrJob.instantUpdate();
+					// 		ecrJobRepository.save(myEcrJob);	
+					// 		jobFound = true;
+					// 	}
+					// }
+
+					// if (jobFound == false) {
+					// 	List<ECRJob> ecrJobs = ecrJobRepository
+					// 			.findByReportIdOrderByIdDesc(ecrData.getId());
+					// 	for (ECRJob myEcrJob : ecrJobs) {
+					// 		myEcrJob.instantUpdate();
+					// 		ecrJobRepository.save(myEcrJob);	
+					// 	}
+					// }
 				}
 
 				retv = 0;
+			} else {
+				logger.warn("Received with HTTP code with " + response.getStatusCode());
+				ecrJob.updateQueryStatus(ECRJob.W);
+				ecrJobRepository.save(ecrJob);
 			}
 		} catch (Exception e) {
+			ecrJob.updateQueryStatus(ECRJob.E);
+			ecrJobRepository.save(ecrJob);
+			
 			e.printStackTrace();
 			logger.error("Posting to PACER-server failed with an error: \n" + e.getMessage());
 			retv = -1;
@@ -475,6 +497,8 @@ public class PollPACERTask {
 	public void pollPACERTaskWithFixedRate() {
 		List<ECRJob> ecrJobs = ecrJobRepository.findByStatusCode("R");
 
+		Date now = new Date();
+
 		// Create a map that contains each job.
 		Map<String, JsonNode> ecrQueriesToSend = new HashMap<String, JsonNode>();
 		//
@@ -485,6 +509,11 @@ public class PollPACERTask {
 		// "localEcrId"}, ...]
 		// }
 		for (ECRJob ecrJob : ecrJobs) {
+			if (now.before(ecrJob.getNextRunDate())) {
+				// Skip this for later turn;
+				continue;
+			}
+
 			// It's confusing... ReportId in ECR Job is a primary key ID in ECR Data.
 			Integer ecrDataKeyId = ecrJob.getReportId();
 			Optional<ECRData> ecrDataOptional = ecrDataRepository.findById(ecrDataKeyId);
@@ -629,16 +658,17 @@ public class PollPACERTask {
 //				ecrList.add("{\"referenceId\": \"" + patientIdentifier + "\", \"name\": \""
 //						+ patientFullName + "\"}");
 
-				ecrQueriesToSend.put(pacerJobManagerEndPoint, ecrQuery);
+				// ecrQueriesToSend.put(pacerJobManagerEndPoint, ecrQuery);
+				sendPacerRequest(pacerJobManagerEndPoint, ecrQuery, ecrJob);
 			}
 		}
 
-		for (Map.Entry<String, JsonNode> entry : ecrQueriesToSend.entrySet()) {
-			// logger.info("Sending to PACER url : " + entry.getKey() + ", listElement : " + entry.getValue().toString());
-			sendPacerRequest(entry.getKey(), entry.getValue());
-//					ecrJob.instantUpdate();
-//					ecrJobRepository.save(ecrJob);
-//			}
-		}
+// 		for (Map.Entry<String, JsonNode> entry : ecrQueriesToSend.entrySet()) {
+// 			// logger.info("Sending to PACER url : " + entry.getKey() + ", listElement : " + entry.getValue().toString());
+// 			sendPacerRequest(entry.getKey(), entry.getValue());
+// //					ecrJob.instantUpdate();
+// //					ecrJobRepository.save(ecrJob);
+// //			}
+// 		}
 	}
 }

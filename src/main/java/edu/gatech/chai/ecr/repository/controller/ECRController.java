@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -127,12 +128,21 @@ public class ECRController {
 		// See if this is in the job list.
 		List<ECRJob> ecrJobs = ecrJobRepository.findByReportIdOrderByIdDesc(data.getId());
 		ECRJob ecrJob;
+		Date now = new Date();
 		if (ecrJobs == null || ecrJobs.size() == 0) {
 			ecrJob = new ECRJob(data);
 		} else {
 			ecrJob = ecrJobs.get(0);
+			ecrJob.setLastUpdateDate(now);
 		}
 
+		Calendar c = Calendar.getInstance();
+		c.setTime(now);
+		c.add(Calendar.MINUTE, 2);
+		ecrJob.setNextRunDate(c.getTime());
+		
+		// Set/Reset the Max Update to 3
+		ecrJob.setUpdateCount(0);
 		ecrJob.startRun();
 			
 		// Add this to the job.

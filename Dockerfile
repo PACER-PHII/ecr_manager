@@ -17,7 +17,7 @@ FROM openjdk
 
 # Copy GT-FHIR war file to webapps.
 #COPY --from=builder /usr/src/app/target/ecr-manager.war $CATALINA_HOME/webapps/ecr-manager.war
-COPY --from=builder /usr/src/app/target/ecr-manager-0.2.2.jar /usr/src/myapp/ecr-manager.jar
+COPY --from=builder /usr/src/app/target/ecr-manager-0.3.0.jar /usr/src/myapp/ecr-manager.jar
 WORKDIR /usr/src/myapp
 CMD ["java", "-jar", "ecr-manager.jar"]
 

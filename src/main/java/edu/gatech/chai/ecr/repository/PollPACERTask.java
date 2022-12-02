@@ -509,7 +509,8 @@ public class PollPACERTask {
 		// "localEcrId"}, ...]
 		// }
 		for (ECRJob ecrJob : ecrJobs) {
-			if (now.before(ecrJob.getNextRunDate())) {
+			Date nextDate = ecrJob.getNextRunDate();
+			if (nextDate != null && now.before(nextDate)) {
 				// Skip this for later turn;
 				continue;
 			}

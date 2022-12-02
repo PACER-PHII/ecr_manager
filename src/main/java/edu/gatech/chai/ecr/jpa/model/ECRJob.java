@@ -154,7 +154,7 @@ public class ECRJob {
 	public static String C = "C";	// Cancelled
 	public static String W = "W";	// Withdrawn
 	public static String E = "E";  	// Error
-	public static Integer HOLD_IN_MIN = 5;
+	public static Integer HOLD_IN_DAY = 1;
 
 	public void updateQueryStatus(String status) {
 		lastUpdateDate = new Date();
@@ -179,7 +179,7 @@ public class ECRJob {
 
 			Calendar c = Calendar.getInstance();
 			c.setTime(lastUpdateDate);
-			c.add(Calendar.MINUTE, ECRJob.HOLD_IN_MIN*updateCount);
+			c.add(Calendar.DAY_OF_MONTH, ECRJob.HOLD_IN_DAY*updateCount);
 			nextRunDate = c.getTime();
 		} 
 	}

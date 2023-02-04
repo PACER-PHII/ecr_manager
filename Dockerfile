@@ -1,12 +1,12 @@
 #Build the Maven project
 #FROM maven:3.8.5-jdk-11 as builder
-FROM maven as builder
+FROM maven:3.6.3-openjdk-17 as builder
 COPY . /usr/src/app
 WORKDIR /usr/src/app
 RUN mvn clean install
 
 #FROM tomcat:alpine
-FROM openjdk
+FROM openjdk:17-jdk
 #RUN apk update
 #RUN apk add zip postgresql-client
 

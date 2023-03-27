@@ -33,7 +33,7 @@ public class ECRData {
 	@Column(name = "case_report_key")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
-	@Column(name = "case_data", length=4096)
+	@Column(name = "case_data", length=40960)
 	@Convert(converter = ECRJsonConverter.class)
 	private ECR data;
 	@Column(name = "case_report_id")

@@ -5,10 +5,8 @@ COPY . /usr/src/app
 WORKDIR /usr/src/app
 RUN mvn clean install
 
-#FROM tomcat:alpine
+#FROM tomcat:jre17
 FROM openjdk:17-jdk
-#RUN apk update
-#RUN apk add zip postgresql-client
 
 # Define environment variable
 #ENV JDBC_USERNAME <DB Username>

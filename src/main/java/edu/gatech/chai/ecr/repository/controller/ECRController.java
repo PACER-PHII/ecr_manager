@@ -51,7 +51,9 @@ import edu.gatech.chai.ecr.jpa.json.Provider;
 import edu.gatech.chai.ecr.jpa.json.TestResult;
 import edu.gatech.chai.ecr.jpa.json.TypeableID;
 import edu.gatech.chai.ecr.jpa.model.ECRData;
+import edu.gatech.chai.ecr.jpa.model.ECRDataHistory;
 import edu.gatech.chai.ecr.jpa.model.ECRJob;
+import edu.gatech.chai.ecr.jpa.repo.ECRDataHistoryRepository;
 import edu.gatech.chai.ecr.jpa.repo.ECRDataRepository;
 import edu.gatech.chai.ecr.jpa.repo.ECRJobRepository;
 import edu.gatech.chai.ecr.repository.ConnectionConfiguration;
@@ -68,6 +70,7 @@ public class ECRController {
 	protected ConnectionConfiguration connectionConfig;
 	protected ECRDataRepository ecrDataRepository;
 	protected ECRJobRepository ecrJobRepository;
+	protected ECRDataHistoryRepository ecrDataHistoryRepository;
 	private static AtomicInteger currentId;
 
 	@Autowired
@@ -87,9 +90,21 @@ public class ECRController {
 	public ECRJobRepository getEcrJobRepository() {
 		return ecrJobRepository;
 	}
-	
+
+	@Autowired
+	public void setEcrDataHistoryRepository(ECRDataHistoryRepository ecrDataHistoryRepository) {
+		this.ecrDataHistoryRepository = ecrDataHistoryRepository;
+	}
+
+	public ECRDataHistoryRepository ECRDataHistoryRepository() {
+		return ecrDataHistoryRepository;
+	}
+
 	@RequestMapping(value = "/ECR", method = RequestMethod.POST)
-	public ResponseEntity<ECR> postNewECR(@RequestBody ECR ecr) {
+	public ResponseEntity<ECR> postNewECR(@RequestBody ECR ecr, @RequestParam(name = "source", defaultValue = "elr", required = false) String source) {
+		// First create ecr history data
+		ECRDataHistory ecrDataHistory = new ECRDataHistory(ecr, source);
+
 		ECRData data = null;
 		Patient patient = ecr.getPatient();
 		List<TypeableID> patientIdList = patient.getid();
@@ -100,6 +115,7 @@ public class ECRController {
 				if (ecrs != null && ecrs.size() > 0) {
 					data = ecrs.get(0);
 					data.update(ecr);
+					ecr.setECRId(Integer.toString(data.getECRId()));
 					log.info("ELR received for an existing case, case_report_key=" + data.getId());
 					break;
 				}
@@ -124,7 +140,7 @@ public class ECRController {
 			data = new ECRData(ecr, currentId.incrementAndGet());
 		}
 		ecrDataRepository.save(data);
-		
+
 		// See if this is in the job list.
 		List<ECRJob> ecrJobs = ecrJobRepository.findByReportIdOrderByIdDesc(data.getId());
 		ECRJob ecrJob;
@@ -148,6 +164,10 @@ public class ECRController {
 		// Add this to the job.
 		ecrJobRepository.save(ecrJob);
 
+		// set ecrId in ecr data history and save it to the history table.
+		ecrDataHistory.setECRId(data.getECRId());
+		ecrDataHistoryRepository.save(ecrDataHistory);
+				
 		return new ResponseEntity<ECR>(data.getECR(), HttpStatus.CREATED);
 	}
 

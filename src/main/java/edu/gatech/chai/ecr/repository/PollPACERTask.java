@@ -55,7 +55,9 @@ import edu.gatech.chai.ecr.jpa.json.Patient;
 import edu.gatech.chai.ecr.jpa.json.Provider;
 import edu.gatech.chai.ecr.jpa.json.TypeableID;
 import edu.gatech.chai.ecr.jpa.model.ECRData;
+import edu.gatech.chai.ecr.jpa.model.ECRDataHistory;
 import edu.gatech.chai.ecr.jpa.model.ECRJob;
+import edu.gatech.chai.ecr.jpa.repo.ECRDataHistoryRepository;
 import edu.gatech.chai.ecr.jpa.repo.ECRDataRepository;
 import edu.gatech.chai.ecr.jpa.repo.ECRJobRepository;
 import edu.gatech.chai.ecr.repository.controller.ECRController;
@@ -70,6 +72,10 @@ public class PollPACERTask {
 
 	@Autowired
 	private ECRDataRepository ecrDataRepository;
+
+	@Autowired
+	private ECRDataHistoryRepository ecrDataHistoryRepository;
+
 
 	private JsonNode searchPacerIndexService(String identifier, String name) {
 		RestTemplate restTemplate = new RestTemplate();
@@ -261,16 +267,23 @@ public class PollPACERTask {
 								+ ") ECR Data sets detected for patientID = " + patientIdentifier + ".\nWe are not updating anything since we do not know which to update.");
 						continue;
 					}
+
+					// This ecr is good. We need to add this to the history table.
+					ECRDataHistory ecrDataHistory = new ECRDataHistory(ecr, "ehr");
+					
 					ecrData = ecrDatas.get(0);
 					ecrData.update(ecr);
 //					}
 
 					ecrDataRepository.save(ecrData);
 
+					// set ecrId in ecr data history and save it to the history table.
+					ecrDataHistory.setECRId(ecrData.getECRId());
+					ecrDataHistoryRepository.save(ecrDataHistory);
+				
 					// Ok, now we update job entry.
 					ecrJob.updateQueryStatus(ECRJob.A);
 					ecrJobRepository.save(ecrJob);
-
 
 					// boolean jobFound = false;
 					// if (patientIdentifier != null) {

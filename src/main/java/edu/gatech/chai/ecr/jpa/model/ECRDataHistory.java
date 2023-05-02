@@ -96,5 +96,13 @@ public class ECRDataHistory {
 	
 	public void setECRId(Integer ecrId) {
 		this.ecrId = ecrId;
-	}	
+	}
+
+	public Date getDate() {
+		return date;
+	}
+
+	public void setDate(Date date) {
+		this.date = date;
+	}
 }

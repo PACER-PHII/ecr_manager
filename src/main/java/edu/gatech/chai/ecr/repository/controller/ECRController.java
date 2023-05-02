@@ -40,6 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 import edu.gatech.chai.ecr.jpa.json.CodeableConcept;
 import edu.gatech.chai.ecr.jpa.json.Diagnosis;
 import edu.gatech.chai.ecr.jpa.json.ECR;
+import edu.gatech.chai.ecr.jpa.json.ECRHistory;
 import edu.gatech.chai.ecr.jpa.json.Facility;
 import edu.gatech.chai.ecr.jpa.json.ImmunizationHistory;
 import edu.gatech.chai.ecr.jpa.json.LabOrderCode;
@@ -188,6 +189,38 @@ public class ECRController {
 		data = data.size() < PAGE_SIZE ? data.subList(0, data.size()) : data.subList(0, PAGE_SIZE);
 		List<ECR> ecrReturnList = transformECRDataToECR(data);
 		return new ResponseEntity<List<ECR>>(ecrReturnList, HttpStatus.OK);
+	}
+
+	private List<ECRHistory> transformECRDataHistoryToECRHistory(List<ECRDataHistory> dataHistories) {
+		List<ECRHistory> ecrHistories = new ArrayList<ECRHistory>();
+		for (ECRDataHistory dataHistory : dataHistories) {
+			ECRHistory ecrHistory = new ECRHistory();
+			ecrHistory.setECRId(dataHistory.getECRId());
+			ecrHistory.setData(dataHistory.getECR());
+			ecrHistory.setDate(dataHistory.getDate().toString());
+			ecrHistory.setSource(dataHistory.getSource());
+			ecrHistories.add(ecrHistory);
+		}
+
+		return ecrHistories;
+	}
+
+	@RequestMapping(value = "/ECRhistory", method = RequestMethod.GET)
+	public ResponseEntity<List<ECRHistory>> getECRHisotry(
+			@RequestParam(name = "page", defaultValue = "0", required = false) Integer page) {
+		List<ECRDataHistory> data = new ArrayList<ECRDataHistory>();
+		int diffPull = -1;
+		while (diffPull != 0 && data.size() < PAGE_SIZE) {
+			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
+			List<ECRDataHistory> incomingData = ecrDataHistoryRepository.findAll(pageable).getContent();
+			int oldSize = data.size();
+			data.addAll(incomingData);
+			diffPull = data.size() - oldSize;
+			page = page + 1;
+		}
+		data = data.size() < PAGE_SIZE ? data.subList(0, data.size()) : data.subList(0, PAGE_SIZE);
+		List<ECRHistory> ecrReturnList = transformECRDataHistoryToECRHistory(data);
+		return new ResponseEntity<List<ECRHistory>>(ecrReturnList, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/exportCSV", method = RequestMethod.GET, produces = "text/csv")

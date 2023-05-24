@@ -207,18 +207,14 @@ public class ECRController {
 
 	@RequestMapping(value = "/ECRhistory", method = RequestMethod.GET)
 	public ResponseEntity<List<ECRHistory>> getECRHisotry(
-			@RequestParam(name = "page", defaultValue = "0", required = false) Integer page) {
+			@RequestParam(name = "case_id", defaultValue = "-1", required = false) Integer ecrId) {
 		List<ECRDataHistory> data = new ArrayList<ECRDataHistory>();
-		int diffPull = -1;
-		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
-			List<ECRDataHistory> incomingData = ecrDataHistoryRepository.findAll(pageable).getContent();
-			int oldSize = data.size();
-			data.addAll(incomingData);
-			diffPull = data.size() - oldSize;
-			page = page + 1;
+		if (ecrId < 0) {
+			data.addAll(ecrDataHistoryRepository.findAll());
+		} else {
+			data.addAll(ecrDataHistoryRepository.findByEcrId(ecrId));
 		}
-		data = data.size() < PAGE_SIZE ? data.subList(0, data.size()) : data.subList(0, PAGE_SIZE);
+		
 		List<ECRHistory> ecrReturnList = transformECRDataHistoryToECRHistory(data);
 		return new ResponseEntity<List<ECRHistory>>(ecrReturnList, HttpStatus.OK);
 	}

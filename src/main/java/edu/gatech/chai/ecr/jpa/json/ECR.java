@@ -14,6 +14,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public class ECR {
 	@JsonProperty("Id")
 	private String ecrId;
+	@JsonProperty("Status")
+	private String status;
 	@JsonProperty("Provider")
 	protected List<Provider> provider = new ArrayList<Provider>();
 	@JsonProperty("Facility")
@@ -45,6 +47,14 @@ public class ECR {
 	@JsonIgnore
 	public void setId(String Id) {
 		this.ecrId = Id;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
 	}
 	
 	public List<Provider> getProvider() {

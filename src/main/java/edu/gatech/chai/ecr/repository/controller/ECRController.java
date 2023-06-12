@@ -220,23 +220,26 @@ public class ECRController {
 	}
 
 	@RequestMapping(value = "/exportCSV", method = RequestMethod.GET, produces = "text/csv")
-	public ResponseEntity<Resource> exportCSV(
-			@RequestParam(name = "page", defaultValue = "0", required = false) Integer page) {
+	public ResponseEntity<Resource> exportCSV() {
+	// public ResponseEntity<Resource> exportCSV(
+	// 		@RequestParam(name = "page", defaultValue = "0", required = false) Integer page) {
 
 		List<String> csvHeaderList = new ArrayList<String>();
 
-		List<ECRData> data = new ArrayList<ECRData>();
-		int diffPull = -1;
-		while (diffPull != 0 && data.size() < PAGE_SIZE) {
-			Pageable pageable = PageRequest.of(page, PAGE_SIZE);
-			List<ECRData> incomingData = ecrDataRepository.findAll(pageable).getContent();
-			int oldSize = data.size();
-			data.addAll(incomingData);
-			data = lintVersionsFromECRDataList(data);
-			diffPull = data.size() - oldSize;
-			page = page + 1;
-		}
-		data = data.size() < PAGE_SIZE ? data.subList(0, data.size()) : data.subList(0, PAGE_SIZE);
+		// List<ECRData> data = new ArrayList<ECRData>();
+		// int diffPull = -1;
+		// while (diffPull != 0 && data.size() < PAGE_SIZE) {
+		// 	Pageable pageable = PageRequest.of(page, PAGE_SIZE);
+		// 	List<ECRData> incomingData = ecrDataRepository.findAll(pageable).getContent();
+		// 	int oldSize = data.size();
+		// 	data.addAll(incomingData);
+		// 	data = lintVersionsFromECRDataList(data);
+		// 	diffPull = data.size() - oldSize;
+		// 	page = page + 1;
+		// }
+		// data = data.size() < PAGE_SIZE ? data.subList(0, data.size()) : data.subList(0, PAGE_SIZE);
+
+		List<ECRData> data = ecrDataRepository.findAll();
 		List<ECR> ecrReturnList = transformECRDataToECR(data);
 
 		List<List<String>> csv = new ArrayList<>();
@@ -1043,7 +1046,12 @@ public class ECRController {
 	public List<ECR> transformECRDataToECR(List<ECRData> sourceList) {
 		List<ECR> targetList = new ArrayList<ECR>();
 		for (ECRData data : sourceList) {
-			targetList.add(data.getECR());
+			ECR ecr = data.getECR();
+			List<ECRJob> ecrJob = ecrJobRepository.findByReportIdOrderByIdDesc(data.getECRId());
+			if (!ecrJob.isEmpty()) {
+				ecr.setStatus(ecrJob.get(0).getStatusCode());
+			}
+			targetList.add(ecr);
 		}
 		return targetList;
 	}

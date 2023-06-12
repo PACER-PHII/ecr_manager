@@ -1047,7 +1047,7 @@ public class ECRController {
 		List<ECR> targetList = new ArrayList<ECR>();
 		for (ECRData data : sourceList) {
 			ECR ecr = data.getECR();
-			List<ECRJob> ecrJob = ecrJobRepository.findByReportIdOrderByIdDesc(data.getECRId());
+			List<ECRJob> ecrJob = ecrJobRepository.findByReportIdOrderByIdDesc(data.getId());
 			if (!ecrJob.isEmpty()) {
 				ecr.setStatus(ecrJob.get(0).getStatusCode());
 			}

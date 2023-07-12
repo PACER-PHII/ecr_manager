@@ -158,24 +158,24 @@ public class ECRJob {
 
 	public void updateQueryStatus(String status) {
 		lastUpdateDate = new Date();
-
 		updateCount++;
-		if (updateCount >= maxUpdates) {
+
+		if (status == null || status.isEmpty()) {
+			logger.error("Status is null or empty for ECR JobId = " + id);
+			statusCode = ECRJob.C;
+			return;
+		}
+		
+		if (!ECRJob.A.equals(status) && updateCount >= maxUpdates) {
 			logger.info("Max Count reached for ECR JobId = " + id);
 			statusCode = ECRJob.C;
 			return;
 		}
 
-		if (status == null || status.isEmpty()) {
-			logger.warn("Status is null or empty for ECR JobId = " + id);
-			statusCode = ECRJob.C;
-			return;
-		}
-		
 		statusCode = status;
 		if (ECRJob.R.equals(status)) {
 			// Increase the wait time by 5 min
-			logger.warn("Update try count = " + (updateCount-1) + " failed for ECR JobId = " + id);
+			logger.warn("Update try count = " + (updateCount) + " failed for ECR JobId = " + id);
 
 			Calendar c = Calendar.getInstance();
 			c.setTime(lastUpdateDate);

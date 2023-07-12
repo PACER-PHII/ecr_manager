@@ -170,7 +170,7 @@ public class ECRController {
 		ecrDataHistory.setECRId(data.getECRId());
 		ecrDataHistoryRepository.save(ecrDataHistory);
 				
-		return new ResponseEntity<ECR>(data.getECR(), HttpStatus.CREATED);
+		return new ResponseEntity<ECR>(addStatus(data), HttpStatus.CREATED);
 	}
 
 	@RequestMapping(value = "/ECR", method = RequestMethod.GET)
@@ -785,7 +785,8 @@ public class ECRController {
 		List<ECRData> ecrDatas = ecrDataRepository.findByEcrIdOrderByVersionDesc(id);
 		if (ecrDatas != null && !ecrDatas.isEmpty()) {
 			ECRData data = ecrDatas.get(0);
-			ret = data.getECR();
+			ret = addStatus(data);
+			// ret = data.getECR();
 		}
 
 		return new ResponseEntity<ECR>(ret, HttpStatus.OK);
@@ -1115,7 +1116,7 @@ public class ECRController {
 		updatingData.setId(currentId.incrementAndGet());
 		updatingData.update(ecr);
 		ecrDataRepository.save(updatingData);
-		return new ResponseEntity<ECR>(updatingData.getECR(), HttpStatus.OK);
+		return new ResponseEntity<ECR>(addStatus(updatingData), HttpStatus.OK);
 	}
 
 	public Connection getConnection() throws SQLException {
@@ -1171,15 +1172,22 @@ public class ECRController {
 		return returnList;
 	}
 
+	private ECR addStatus(ECRData ecrData) {
+		ECR ecr = ecrData.getECR();
+		List<ECRJob> ecrJob = ecrJobRepository.findByReportIdOrderByIdDesc(ecrData.getId());
+
+		if (!ecrJob.isEmpty()) {
+			ecr.setStatus(ecrJob.get(0).getStatusCode());
+		}
+
+		return ecr;
+	}
+
 	// Transform a list to ECR
 	public List<ECR> transformECRDataToECR(List<ECRData> sourceList) {
 		List<ECR> targetList = new ArrayList<ECR>();
 		for (ECRData data : sourceList) {
-			ECR ecr = data.getECR();
-			List<ECRJob> ecrJob = ecrJobRepository.findByReportIdOrderByIdDesc(data.getId());
-			if (!ecrJob.isEmpty()) {
-				ecr.setStatus(ecrJob.get(0).getStatusCode());
-			}
+			ECR ecr = addStatus(data);
 			targetList.add(ecr);
 		}
 		return targetList;

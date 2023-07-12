@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -207,16 +208,144 @@ public class ECRController {
 
 	@RequestMapping(value = "/ECRhistory", method = RequestMethod.GET)
 	public ResponseEntity<List<ECRHistory>> getECRHisotry(
-			@RequestParam(name = "case_id", defaultValue = "-1", required = false) Integer ecrId) {
+			@RequestParam(name = "id", defaultValue = "-1", required = false) Integer ecrId,
+			@RequestParam(name = "source", defaultValue = "", required = false) String source,
+			@RequestParam(name = "date", defaultValue = "", required = false) String date) {
 		List<ECRDataHistory> data = new ArrayList<ECRDataHistory>();
-		if (ecrId < 0) {
-			data.addAll(ecrDataHistoryRepository.findAll());
+		if (ecrId <= 0) {
+			if (source.isBlank() && date.isBlank()) {
+				data.addAll(ecrDataHistoryRepository.findAll());
+			} else if (!source.isBlank() && !date.isBlank()) {
+				if (date.startsWith("eq")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findBySourceAndDateOrderByDate(source, java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("lt")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findBySourceAndDateLessThanOrderByDate(source, java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("le")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findBySourceAndDateLessThanEqualOrderByDate(source, java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("gt")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findBySourceAndDateGreaterThanOrderByDate(source, java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("ge")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findBySourceAndDateGreaterThanEqualOrderByDate(source, java.sql.Timestamp.valueOf(dateTime)));
+				}
+			} else if (!source.isBlank()) {
+				data.addAll(ecrDataHistoryRepository.findBySourceOrderByDate(source));
+			} else { // !date.isBlank()
+				if (date.startsWith("eq")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findByDateOrderByDate(java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("lt")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findByDateLessThanOrderByDate(java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("le")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findByDateLessThanEqualOrderByDate(java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("gt")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findByDateGreaterThanOrderByDate(java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("ge")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findByDateGreaterThanEqualOrderByDate(java.sql.Timestamp.valueOf(dateTime)));
+				}
+			}
 		} else {
-			data.addAll(ecrDataHistoryRepository.findByEcrId(ecrId));
+			if (source.isBlank() && date.isBlank()) {
+				data.addAll(ecrDataHistoryRepository.findByEcrId(ecrId));
+			} else if (!source.isBlank() && !date.isBlank()) {
+				if (date.startsWith("eq")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findByEcrIdAndSourceAndDateOrderByDate(ecrId, source, java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("lt")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findByEcrIdAndSourceAndDateLessThanOrderByDate(ecrId, source, java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("le")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findByEcrIdAndSourceAndDateLessThanEqualOrderByDate(ecrId, source, java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("gt")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findByEcrIdAndSourceAndDateGreaterThanOrderByDate(ecrId, source, java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("ge")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findByEcrIdAndSourceAndDateGreaterThanEqualOrderByDate(ecrId, source, java.sql.Timestamp.valueOf(dateTime)));
+				}
+			} else if (!source.isBlank()) {
+				data.addAll(ecrDataHistoryRepository.findByEcrIdAndSourceOrderByDate(ecrId, source));
+			} else { // !date.isBlank()
+				if (date.startsWith("eq")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findByEcrIdAndDateOrderByDate(ecrId, java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("lt")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findByEcrIdAndDateLessThanOrderByDate(ecrId, java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("le")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findByEcrIdAndDateLessThanEqualOrderByDate(ecrId, java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("gt")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findByEcrIdAndDateGreaterThanOrderByDate(ecrId, java.sql.Timestamp.valueOf(dateTime)));
+				} else if (date.startsWith("ge")) {
+					String dateString = date.substring(2);
+					LocalDateTime dateTime = LocalDateTime.parse(dateString);
+					data.addAll(ecrDataHistoryRepository.findByEcrIdAndDateGreaterThanEqualOrderByDate(ecrId, java.sql.Timestamp.valueOf(dateTime)));
+				}
+			}			
+
 		}
 		
 		List<ECRHistory> ecrReturnList = transformECRDataHistoryToECRHistory(data);
 		return new ResponseEntity<List<ECRHistory>>(ecrReturnList, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/trigger", method = RequestMethod.POST, params = "id")
+	public ResponseEntity<?> trigger(@RequestParam Integer id) {
+		Integer ecrKeyId = null;
+		List<ECRData> ecrDatas = ecrDataRepository.findByEcrIdOrderByVersionDesc(id);
+		if (ecrDatas != null && !ecrDatas.isEmpty()) {
+			ECRData data = ecrDatas.get(0);
+			ecrKeyId = data.getId();
+		}
+
+		if (ecrKeyId != null) {
+			List<ECRJob> ecrJobs = ecrJobRepository.findByReportIdOrderByIdDesc(ecrKeyId);
+			if (ecrJobs != null && !ecrJobs.isEmpty()) {
+				ECRJob ecrJob = ecrJobs.get(0);
+				if (ecrJob != null) {
+					Integer updateCount = ecrJob.getUpdateCount();
+					Integer maxCount = ecrJob.getMaxUpdates();
+					if (updateCount >= maxCount) {
+						ecrJob.setUpdateCount(0);
+					}
+					ecrJob.setStatusCode("R");
+					ecrJobRepository.save(ecrJob);
+					return new ResponseEntity<>(HttpStatus.OK);
+				} 
+			}
+		}
+		
+		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}
 
 	@RequestMapping(value = "/exportCSV", method = RequestMethod.GET, produces = "text/csv")

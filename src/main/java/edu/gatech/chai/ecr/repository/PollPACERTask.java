@@ -269,7 +269,7 @@ public class PollPACERTask {
 					}
 
 					// This ecr is good. We need to add this to the history table.
-					ECRDataHistory ecrDataHistory = new ECRDataHistory(ecr, "ehr");
+					// ECRDataHistory ecrDataHistory = new ECRDataHistory(ecr, "ehr");
 					
 					ecrData = ecrDatas.get(0);
 					ecrData.update(ecr);
@@ -277,14 +277,16 @@ public class PollPACERTask {
 
 					ecrDataRepository.save(ecrData);
 
-					// set ecrId in ecr data history and save it to the history table.
-					ecrDataHistory.setECRId(ecrData.getECRId());
-					ecrDataHistoryRepository.save(ecrDataHistory);
-				
 					// Ok, now we update job entry.
 					ecrJob.updateQueryStatus(ECRJob.A);
 					ecrJobRepository.save(ecrJob);
 
+					// set ecrId in ecr data history and save it to the history table.
+					ecr.setStatus(ecrJob.getStatusCode());
+					ECRDataHistory ecrDataHistory = new ECRDataHistory(ecr, "ehr");
+					ecrDataHistory.setECRId(ecrData.getECRId());
+					ecrDataHistoryRepository.save(ecrDataHistory);
+				
 					// boolean jobFound = false;
 					// if (patientIdentifier != null) {
 					// 	List<ECRJob> ecrJobs = ecrJobRepository.findByPatientIdContainingIgnoreCase(patientIdentifier);

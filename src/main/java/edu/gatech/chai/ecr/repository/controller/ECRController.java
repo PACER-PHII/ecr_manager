@@ -1174,10 +1174,10 @@ public class ECRController {
 
 	private ECR addStatus(ECRData ecrData) {
 		ECR ecr = ecrData.getECR();
-		List<ECRJob> ecrJob = ecrJobRepository.findByReportIdOrderByIdDesc(ecrData.getId());
+		List<ECRJob> ecrJobs = ecrJobRepository.findByReportIdOrderByIdDesc(ecrData.getId());
 
-		if (!ecrJob.isEmpty()) {
-			ecr.setStatus(ecrJob.get(0).getStatusCode());
+		if (!ecrJobs.isEmpty()) {
+			ecr.setStatus(ecrJobs.get(0).getStatusCode());
 		}
 
 		return ecr;

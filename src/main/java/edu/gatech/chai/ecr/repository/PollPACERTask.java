@@ -166,37 +166,12 @@ public class PollPACERTask {
 			headers.add("Authorization", authHeader);
 		}
 
-//		Map<String, String> vars = new HashMap<>();
-//		vars.put("ecrId", ecrId.toString());
-//		vars.put("patientId", patientId);
-
-//		if (patientFullName == null) {
-//			patientFullName = "";
-//		}
-
-//		String[] patientParam = patientIdentifier.split("\\|", 2);
-//		String referenceId = null;
-//		if (patientParam[1] != null) {
-//			referenceId = patientParam[1];
-//		} else {
-//			referenceId = "";
-//		}
-//		String referenceId = patientIdentifier;
-//		String requestJson = "{\"name\": \"STD_ECR_" + ecrId
-//				+ "\", \"jobType\": \"ECR\", \"listElements\": [{\"referenceId\": \"" + referenceId + "\", \"name\": \""
-//				+ patientFullName + "\"}]}";
-
 		DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 		Date date = new Date();
 		JsonNode requestJson = mapper.createObjectNode();
 		((ObjectNode) requestJson).put("name", "STD_ECR_" + dateFormat.format(date));
 		((ObjectNode) requestJson).put("jobType", "ECR");
 		((ObjectNode) requestJson).set("listElements", query.get("patients"));
-//				
-//				
-//				"{\"name\": \"STD_ECR_"+dateFormat.format(date)+"\", \"jobType\": \"ECR\", \"listElements\": ";
-//		requestJson.concat(query.get("patients").);
-//		requestJson.concat("}");
 
 		HttpEntity<JsonNode> entity = new HttpEntity<JsonNode>(requestJson, headers);
 
@@ -258,13 +233,21 @@ public class PollPACERTask {
 					}
 
 					if (ecrDatas.size() == 0) {
-						logger.warn("We could not locate the ECR for patientID = " + patientIdentifier);
+						String msg = "We could not locate the ECR for patientID = " + patientIdentifier;
+						logger.error(msg);
+
+						recordToHistoryLog(ecr, ecrJob, Integer.parseInt(ecr.getECRId()), msg);
+						
 						continue;
 					}
 
 					if (ecrDatas.size() > 1) {
-						logger.warn("Multiple (" + ecrDatas.size()
-								+ ") ECR Data sets detected for patientID = " + patientIdentifier + ".\nWe are not updating anything since we do not know which to update.");
+						String msg = "Multiple (" + ecrDatas.size()
+								+ ") ECR Data sets detected for patientID = " + patientIdentifier + ".\nWe are not updating anything since we do not know which to update.";
+						logger.warn(msg);
+
+						recordToHistoryLog(ecr, ecrJob, ecrDatas.get(0).getECRId(), msg);
+
 						continue;
 					}
 
@@ -282,10 +265,7 @@ public class PollPACERTask {
 					ecrJobRepository.save(ecrJob);
 
 					// set ecrId in ecr data history and save it to the history table.
-					ecr.setStatus(ecrJob.getStatusCode());
-					ECRDataHistory ecrDataHistory = new ECRDataHistory(ecr, "ehr");
-					ecrDataHistory.setECRId(ecrData.getECRId());
-					ecrDataHistoryRepository.save(ecrDataHistory);
+					recordToHistoryLog(ecr, ecrJob, ecrData.getECRId(), "");
 				
 					// boolean jobFound = false;
 					// if (patientIdentifier != null) {
@@ -309,20 +289,37 @@ public class PollPACERTask {
 
 				retv = 0;
 			} else {
-				logger.warn("Received with HTTP code with " + response.getStatusCode());
+				String msg = "Received with HTTP code with " + response.getStatusCode(); 
+				logger.error(msg);
 				ecrJob.updateQueryStatus(ECRJob.W);
 				ecrJobRepository.save(ecrJob);
+
+				Optional<ECRData> ecrData = ecrDataRepository.findById(ecrJob.getReportId());
+				ECR ecr = ecrData.get().getECR();
+				recordToHistoryLog(ecr, ecrJob, ecrData.get().getECRId(), msg);
 			}
 		} catch (Exception e) {
 			ecrJob.updateQueryStatus(ECRJob.E);
 			ecrJobRepository.save(ecrJob);
 			
+			Optional<ECRData> ecrData = ecrDataRepository.findById(ecrJob.getReportId());
+			ECR ecr = ecrData.get().getECR();
+			recordToHistoryLog(ecr, ecrJob, ecrData.get().getECRId(), e.getMessage());
+
 			e.printStackTrace();
 			logger.error("Posting to PACER-server failed with an error: \n" + e.getMessage());
 			retv = -1;
 		}
 
 		return retv;
+	}
+
+	private void recordToHistoryLog(ECR ecr, ECRJob ecrJob, Integer ecrId, String statusLog) {
+		ecr.setStatus(ecrJob.getStatusCode());
+		ecr.setStatusLog(statusLog);
+		ECRDataHistory ecrDataHistory = new ECRDataHistory(ecr, "ehr");
+		ecrDataHistory.setECRId(ecrId);
+		ecrDataHistoryRepository.save(ecrDataHistory);
 	}
 
 	@Scheduled(fixedDelay = 60000)
@@ -588,7 +585,14 @@ public class PollPACERTask {
 			}
 
 			if (pacerJobManagerEndPoint == null || pacerJobManagerEndPoint.isEmpty()) {
-				logger.info("No PACER Job Manger Endpoint Found. Skipping ECRid: " + ecr.getECRId());
+				String msg = "No PACER Job Manger Endpoint Found. Skipping ECRid: " + ecr.getECRId();
+				logger.info(msg);
+
+				ecr.setStatusLog(msg);
+				ECRDataHistory ecrDataHistory = new ECRDataHistory(ecr, "ehr");
+				ecrDataHistory.setECRId(ecrId);
+				ecrDataHistoryRepository.save(ecrDataHistory);
+
 				continue;
 			}
 

@@ -16,6 +16,8 @@ public class ECR {
 	private String ecrId;
 	@JsonProperty("Status")
 	private String status;
+	@JsonProperty("StatusLog")
+	private String statusLog;
 	@JsonProperty("Provider")
 	protected List<Provider> provider = new ArrayList<Provider>();
 	@JsonProperty("Facility")
@@ -57,6 +59,14 @@ public class ECR {
 		this.status = status;
 	}
 	
+	public String getStatusLog() {
+		return statusLog;
+	}
+
+	public void setStatusLog(String statusLog) {
+		this.statusLog = statusLog;
+	}
+
 	public List<Provider> getProvider() {
 		return provider;
 	}

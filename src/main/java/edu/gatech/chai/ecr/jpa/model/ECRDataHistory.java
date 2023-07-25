@@ -27,7 +27,7 @@ import edu.gatech.chai.ecr.jpa.json.ECR;
 import edu.gatech.chai.ecr.jpa.json.utils.ECRJsonConverter;
 
 @Entity
-@Table(name = "ecr_data_hisotry", schema = "ecr")
+@Table(name = "ecr_data_history", schema = "ecr")
 public class ECRDataHistory {
 	private static final Logger log = LoggerFactory.getLogger(ECRDataHistory.class);
 

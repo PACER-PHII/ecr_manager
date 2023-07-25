@@ -104,9 +104,6 @@ public class ECRController {
 
 	@RequestMapping(value = "/ECR", method = RequestMethod.POST)
 	public ResponseEntity<ECR> postNewECR(@RequestBody ECR ecr, @RequestParam(name = "source", defaultValue = "elr", required = false) String source) {
-		// First create ecr history data
-		ECRDataHistory ecrDataHistory = new ECRDataHistory(ecr, source);
-
 		ECRData data = null;
 		Patient patient = ecr.getPatient();
 		List<TypeableID> patientIdList = patient.getid();
@@ -167,6 +164,8 @@ public class ECRController {
 		ecrJobRepository.save(ecrJob);
 
 		// set ecrId in ecr data history and save it to the history table.
+		ecr.setStatus(ecrJob.getStatusCode());
+		ECRDataHistory ecrDataHistory = new ECRDataHistory(ecr, source);
 		ecrDataHistory.setECRId(data.getECRId());
 		ecrDataHistoryRepository.save(ecrDataHistory);
 				

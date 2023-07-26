@@ -8,7 +8,7 @@ FROM winamd64/openjdk
 	  
 # Copy GT-FHIR war file to webapps.
 COPY --from=builder /usr/src/app/mssql-jdbc_auth-10.2.0.x64.dll /openjdk-17/bin/mssql-jdbc_auth-10.2.0.x64.dll
-COPY --from=builder /usr/src/app/target/ecr-manager-0.5.0.jar ecr-manager.jar
+COPY --from=builder /usr/src/app/target/ecr-manager-0.5.1.jar ecr-manager.jar
 CMD [ "java", "-jar", "ecr-manager.jar"]
 
 EXPOSE 8080

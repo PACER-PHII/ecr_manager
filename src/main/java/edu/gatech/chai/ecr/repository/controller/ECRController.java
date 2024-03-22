@@ -24,6 +24,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.PageRequest;
@@ -203,6 +204,15 @@ public class ECRController {
 		}
 
 		return ecrHistories;
+	}
+
+	@Value("${server.version}")
+    private String version;
+
+	@RequestMapping(value = "/version", method = RequestMethod.GET)
+	public ResponseEntity<String> getVersion() {
+		
+		return new ResponseEntity<String>(version, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/ECRhistory", method = RequestMethod.GET)
